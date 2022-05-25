@@ -11,9 +11,9 @@
     <PackageTags></PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/envelope-net/Envelope</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/envelope-net/Envelope</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/envelope-net/envelope-core</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/envelope-net/envelope-core</RepositoryUrl>
     <PackageIcon>envelope_icon.png</PackageIcon>
     <NeutralLanguage>en</NeutralLanguage>
     <Copyright>Copyright Envelope</Copyright>
