@@ -1,0 +1,38 @@
+﻿using Envelope.Collections;
+using Envelope.Extensions;
+using System.Text;
+
+namespace Envelope.Hardware;
+
+public class NetworkAdapter : Serializer.IDictionaryObject, Serializer.ITextSerializer
+{
+	public string? Caption { get; set; }
+	public string? Description { get; set; }
+	public bool? IsIpEnabled { get; set; }
+	public string? MacAddress { get; set; }
+	public string? DNSDomain { get; set; }
+	public string? DNSHostName { get; set; }
+
+	public IDictionary<string, object?> ToDictionary(Serializer.ISerializer? serializer = null)
+		=> new DictionaryBuilder<string>()
+			.AddIfNotWhiteSpace(nameof(Caption), Caption, out _)
+			.AddIfNotWhiteSpace(nameof(Description), Description, out _)
+			.AddIfHasValue(nameof(IsIpEnabled), IsIpEnabled, out _)
+			.AddIfNotWhiteSpace(nameof(MacAddress), MacAddress, out _)
+			.AddIfNotWhiteSpace(nameof(DNSDomain), DNSDomain, out _)
+			.AddIfNotWhiteSpace(nameof(DNSHostName), DNSHostName, out _)
+			.ToObject();
+
+	public override string ToString()
+	{
+		return $"{Description} | {MacAddress}";
+	}
+
+	public void WriteTo(StringBuilder sb, string? before = null, string? after = null)
+	{
+		sb
+			.AppendLineSafe(before)
+			.AppendLine($"NetworkAdapter = {this}")
+			.AppendLineSafe(after);
+	}
+}
