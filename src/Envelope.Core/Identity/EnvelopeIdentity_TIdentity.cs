@@ -4,7 +4,8 @@ using System.Security.Principal;
 
 namespace Envelope.Identity;
 
-public class EnvelopeIdentity : ClaimsIdentity
+public class EnvelopeIdentity<TIdentity> : ClaimsIdentity
+	where TIdentity : struct
 {
 	public const string ISSUER = "https://claims.envelope.sk";
 	public const string LOGIN_CLAIM_NAME = "login";
@@ -16,11 +17,11 @@ public class EnvelopeIdentity : ClaimsIdentity
 	public const string PERMISSION_ID_CLAIM_NAME = "permissionId";
 
 	private readonly IReadOnlyCollection<string> EMPTY_ROLES = new List<string>();
-	private readonly IReadOnlyCollection<Guid> EMPTY_ROLE_IDS = new List<Guid>();
+	private readonly IReadOnlyCollection<TIdentity> EMPTY_ROLE_IDS = new List<TIdentity>();
 	private readonly IReadOnlyCollection<string> EMPTY_PERMISSIONS = new List<string>();
-	private readonly IReadOnlyCollection<Guid> EMPTY_PERMISSIONS_IDS = new List<Guid>();
+	private readonly IReadOnlyCollection<TIdentity> EMPTY_PERMISSIONS_IDS = new List<TIdentity>();
 
-	public Guid UserId { get; }
+	public TIdentity UserId { get; }
 
 	public string Login { get; }
 
@@ -30,23 +31,23 @@ public class EnvelopeIdentity : ClaimsIdentity
 
 	public IReadOnlyCollection<string> Roles { get; }
 
-	public IReadOnlyCollection<Guid> RoleIds { get; }
+	public IReadOnlyCollection<TIdentity> RoleIds { get; }
 
 	public IReadOnlyCollection<string> Permissions { get; }
 
-	public IReadOnlyCollection<Guid> PermissionIds { get; }
+	public IReadOnlyCollection<TIdentity> PermissionIds { get; }
 
 	public EnvelopeIdentity(
 		string name,
 		string authenticationType,
-		Guid userId,
+		TIdentity userId,
 		string login,
 		string displayName,
 		object? userData,
 		List<string>? roles,
-		List<Guid>? roleIds,
+		List<TIdentity>? roleIds,
 		List<string>? permissions,
-		List<Guid>? permissionIds,
+		List<TIdentity>? permissionIds,
 		bool rolesToClams,
 		bool permissionsToClaims)
 		: base(new GenericIdentity(
@@ -57,7 +58,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 				? throw new ArgumentNullException(nameof(authenticationType))
 				: authenticationType))
 	{
-		var defaulrUserId = default(Guid);
+		var defaulrUserId = default(TIdentity);
 		UserId = defaulrUserId.Equals(userId)
 			? throw new ArgumentNullException(nameof(userId))
 			: userId;
@@ -77,14 +78,14 @@ public class EnvelopeIdentity : ClaimsIdentity
 
 	public EnvelopeIdentity(
 		IIdentity identity,
-		Guid userId,
+		TIdentity userId,
 		string login,
 		string displayName,
 		object? userData,
 		List<string>? roles,
-		List<Guid>? roleIds,
+		List<TIdentity>? roleIds,
 		List<string>? permissions,
-		List<Guid>? permissionIds,
+		List<TIdentity>? permissionIds,
 		bool rolesToClams,
 		bool permissionsToClaims)
 		: base(identity, (identity as ClaimsIdentity)?.Claims)
@@ -92,7 +93,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		//if (identity is WindowsIdentity winIdentity)
 		//	WindowsIdentity = winIdentity;
 
-		var defaulrUserId = default(Guid);
+		var defaulrUserId = default(TIdentity);
 		UserId = defaulrUserId.Equals(userId)
 			? throw new ArgumentNullException(nameof(userId))
 			: userId;
@@ -136,7 +137,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return Roles.Contains(role, StringComparer.InvariantCultureIgnoreCase);
 	}
 
-	public bool IsInRole(Guid role)
+	public bool IsInRole(TIdentity role)
 	{
 		return RoleIds.Contains(role);
 	}
@@ -149,7 +150,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return roles.All(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
 	}
 
-	public bool IsInAllRoles(params Guid[] roles)
+	public bool IsInAllRoles(params TIdentity[] roles)
 	{
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
@@ -165,7 +166,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return roles.Any(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
 	}
 
-	public bool IsInAnyRole(params Guid[] roles)
+	public bool IsInAnyRole(params TIdentity[] roles)
 	{
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
@@ -181,7 +182,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return Permissions.Contains(permission, StringComparer.InvariantCultureIgnoreCase);
 	}
 
-	public bool HasPermission(Guid permission)
+	public bool HasPermission(TIdentity permission)
 	{
 		return PermissionIds.Contains(permission);
 	}
@@ -194,7 +195,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return permissions.All(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
 	}
 
-	public bool HasAllPermissions(params Guid[] permissions)
+	public bool HasAllPermissions(params TIdentity[] permissions)
 	{
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
@@ -210,7 +211,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return permissions.Any(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
 	}
 
-	public bool HasAnyPermission(params Guid[] permissions)
+	public bool HasAnyPermission(params TIdentity[] permissions)
 	{
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
@@ -242,12 +243,12 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return permissions.Any(permission => HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission));
 	}
 
-	public bool HasPermissionClaim(Guid permission)
+	public bool HasPermissionClaim(TIdentity permission)
 	{
 		return HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission);
 	}
 
-	public bool HasAllPermissionClaims(params Guid[] permissions)
+	public bool HasAllPermissionClaims(params TIdentity[] permissions)
 	{
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
@@ -255,7 +256,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return permissions.All(permission => HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission));
 	}
 
-	public bool HasAnyPermissionClaim(params Guid[] permissions)
+	public bool HasAnyPermissionClaim(params TIdentity[] permissions)
 	{
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
@@ -307,7 +308,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 				.Select(v => new Claim(type, v, null, ISSUER)));
 	}
 
-	protected void AddClaims(string type, IEnumerable<Guid> values)
+	protected void AddClaims(string type, IEnumerable<TIdentity> values)
 	{
 		if (string.IsNullOrWhiteSpace(type))
 			throw new ArgumentNullException(nameof(type));
@@ -471,7 +472,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		return false;
 	}
 
-	public bool HasEnvelopeClaim(string type, Guid value)
+	public bool HasEnvelopeClaim(string type, TIdentity value)
 	{
 		if (type == null)
 			throw new ArgumentNullException(nameof(type));
@@ -482,7 +483,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		foreach (Claim claim in Claims)
 			if (claim != null
 					&& string.Equals(claim.Type, type, StringComparison.OrdinalIgnoreCase)
-					&& ConverterHelper.TryConvertFrom(claim.Value, out Guid GuidValue) && GuidValue.Equals(value)
+					&& ConverterHelper.TryConvertFrom(claim.Value, out TIdentity tIdentityValue) && tIdentityValue.Equals(value)
 					&& IsEnvelopeClaim(claim))
 				return true;
 

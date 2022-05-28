@@ -6,15 +6,16 @@ using System.Runtime.CompilerServices;
 
 namespace Envelope;
 
-public class ApplicationContext : IApplicationContext
+public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
+	where TIdentity : struct
 {
 	public string SourceSystemName { get; }
-	public ITraceInfo TraceInfo { get; private set; }
+	public ITraceInfo<TIdentity> TraceInfo { get; private set; }
 	public IApplicationResources ApplicationResources { get; }
 	public IRequestMetadata? RequestMetadata { get; }
 	public IDictionary<string, object?> Items { get; }
 
-	public ApplicationContext(ITraceInfo traceInfo, IApplicationResources applicationResources, IRequestMetadata? requestMetadata)
+	public ApplicationContext(ITraceInfo<TIdentity> traceInfo, IApplicationResources applicationResources, IRequestMetadata? requestMetadata)
 	{
 		TraceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
 		SourceSystemName = traceInfo.SourceSystemName;
@@ -24,28 +25,28 @@ public class ApplicationContext : IApplicationContext
 	}
 
 	private readonly object _lockTrace = new();
-	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame)
+	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
 				.Build();
 		}
 
 		return TraceInfo;
 	}
 
-	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame, Guid? idUser)
+	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, TIdentity? idUser)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
 				.IdUser(idUser)
 				.Build();
 		}
@@ -53,14 +54,14 @@ public class ApplicationContext : IApplicationContext
 		return TraceInfo;
 	}
 
-	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame, EnvelopePrincipal? principal)
+	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, EnvelopePrincipal<TIdentity>? principal)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
 				.Principal(principal)
 				.Build();
 		}
@@ -68,7 +69,7 @@ public class ApplicationContext : IApplicationContext
 		return TraceInfo;
 	}
 
-	public ITraceInfo Next(
+	public ITraceInfo<TIdentity> Next(
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
@@ -80,7 +81,7 @@ public class ApplicationContext : IApplicationContext
 				.MethodParameters(methodParameters)
 				.Build());
 
-	public ITraceInfo Next(ITraceFrame traceFrame)
-		=> new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+	public ITraceInfo<TIdentity> Next(ITraceFrame traceFrame)
+		=> new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
 			.Build();
 }

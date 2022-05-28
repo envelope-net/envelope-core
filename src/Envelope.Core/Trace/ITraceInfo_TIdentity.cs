@@ -2,7 +2,8 @@
 
 namespace Envelope.Trace;
 
-public interface ITraceInfo
+public interface ITraceInfo<TIdentity>
+	where TIdentity : struct
 {
 	Guid RuntimeUniqueKey { get; }
 
@@ -10,11 +11,11 @@ public interface ITraceInfo
 
 	ITraceFrame TraceFrame { get; }
 
-	EnvelopePrincipal? Principal { get; }
+	EnvelopePrincipal<TIdentity>? Principal { get; }
 
-	EnvelopeIdentity? User { get; }
+	EnvelopeIdentity<TIdentity>? User { get; }
 
-	Guid? IdUser { get; }
+	TIdentity? IdUser { get; }
 
 	/// <summary>
 	/// Usualy HttpContext.TraceIdentifier, which is marked as external because can be changed
