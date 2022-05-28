@@ -4,7 +4,8 @@ using System.Runtime.CompilerServices;
 
 namespace Envelope.Trace;
 
-public class TraceInfo : ITraceInfo
+public class TraceInfo<TIdentity> : ITraceInfo<TIdentity>
+	where TIdentity : struct
 {
 	public Guid RuntimeUniqueKey { get; internal set; }
 
@@ -12,11 +13,11 @@ public class TraceInfo : ITraceInfo
 
 	public ITraceFrame TraceFrame { get; }
 
-	public EnvelopePrincipal? Principal { get; internal set; }
+	public EnvelopePrincipal<TIdentity>? Principal { get; internal set; }
 
-	public EnvelopeIdentity? User => Principal?.IdentityBase;
+	public EnvelopeIdentity<TIdentity>? User => Principal?.IdentityBase;
 
-	public Guid? IdUser { get; internal set; }
+	public TIdentity? IdUser { get; internal set; }
 
 	public string? ExternalCorrelationId { get; internal set; }
 
@@ -35,15 +36,15 @@ public class TraceInfo : ITraceInfo
 	public override string ToString()
 		=> $"{SourceSystemName} {TraceFrame}{Environment.NewLine} {nameof(RuntimeUniqueKey)} = {RuntimeUniqueKey} | {nameof(CorrelationId)} = {CorrelationId} | {nameof(IdUser)} = {IdUser}";
 
-	public static ITraceInfo Create(
+	public static ITraceInfo<TIdentity> Create(
 		string sourceSystemName,
-		EnvelopePrincipal? principal = null,
+		EnvelopePrincipal<TIdentity>? principal = null,
 		Guid? correlationId = null,
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
 		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
+		=> new TraceInfoBuilder<TIdentity>(
 				sourceSystemName,
 				new TraceFrameBuilder()
 					.CallerMemberName(memberName)
@@ -56,16 +57,16 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
+	public static ITraceInfo<TIdentity> Create(
 		string sourceSystemName,
 		ITraceFrame? previousTraceFrame,
-		EnvelopePrincipal? principal = null,
+		EnvelopePrincipal<TIdentity>? principal = null,
 		Guid? correlationId = null,
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
 		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
+		=> new TraceInfoBuilder<TIdentity>(
 				sourceSystemName,
 				new TraceFrameBuilder(previousTraceFrame)
 					.CallerMemberName(memberName)
@@ -78,15 +79,15 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
+	public static ITraceInfo<TIdentity> Create(
 		string sourceSystemName,
-		Guid? iduser,
+		TIdentity? iduser,
 		Guid? correlationId = null,
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
 		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
+		=> new TraceInfoBuilder<TIdentity>(
 				sourceSystemName,
 				new TraceFrameBuilder()
 					.CallerMemberName(memberName)
@@ -99,16 +100,16 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
+	public static ITraceInfo<TIdentity> Create(
 		string sourceSystemName,
 		ITraceFrame? previousTraceFrame,
-		Guid? iduser,
+		TIdentity? iduser,
 		Guid? correlationId = null,
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
 		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
+		=> new TraceInfoBuilder<TIdentity>(
 				sourceSystemName,
 				new TraceFrameBuilder(previousTraceFrame)
 					.CallerMemberName(memberName)
@@ -121,14 +122,14 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
-		ITraceInfo? previousTraceInfo,
+	public static ITraceInfo<TIdentity> Create(
+		ITraceInfo<TIdentity>? previousTraceInfo,
 		string? sourceSystemName = null,
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
 		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
+		=> new TraceInfoBuilder<TIdentity>(
 				sourceSystemName ?? previousTraceInfo?.SourceSystemName!,
 				new TraceFrameBuilder()
 					.CallerMemberName(memberName)

@@ -3,9 +3,10 @@ using System.Security.Principal;
 
 namespace Envelope.Identity;
 
-public class EnvelopePrincipal : ClaimsPrincipal
+public class EnvelopePrincipal<TIdentity> : ClaimsPrincipal
+	where TIdentity : struct
 {
-	public EnvelopeIdentity? IdentityBase => Identity as EnvelopeIdentity;
+	public EnvelopeIdentity<TIdentity>? IdentityBase => Identity as EnvelopeIdentity<TIdentity>;
 
 	public EnvelopePrincipal()
 		: base()
@@ -37,7 +38,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.IsInRole(role);
 	}
 
-	public bool IsInRole(Guid role)
+	public bool IsInRole(TIdentity role)
 	{
 		return IdentityBase != null && IdentityBase.IsInRole(role);
 	}
@@ -47,7 +48,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.IsInAllRoles(roles);
 	}
 
-	public bool IsInAllRoles(params Guid[] roles)
+	public bool IsInAllRoles(params TIdentity[] roles)
 	{
 		return IdentityBase != null && IdentityBase.IsInAllRoles(roles);
 	}
@@ -57,7 +58,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.IsInAnyRole(roles);
 	}
 
-	public bool IsInAnyRole(params Guid[] roles)
+	public bool IsInAnyRole(params TIdentity[] roles)
 	{
 		return IdentityBase != null && IdentityBase.IsInAnyRole(roles);
 	}
@@ -67,7 +68,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.HasPermission(permission);
 	}
 
-	public bool HasPermission(Guid permission)
+	public bool HasPermission(TIdentity permission)
 	{
 		return IdentityBase != null && IdentityBase.HasPermission(permission);
 	}
@@ -77,7 +78,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.HasAllPermissions(permissions);
 	}
 
-	public bool HasAllPermissions(params Guid[] permissions)
+	public bool HasAllPermissions(params TIdentity[] permissions)
 	{
 		return IdentityBase != null && IdentityBase.HasAllPermissions(permissions);
 	}
@@ -87,7 +88,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.HasAnyPermission(permissions);
 	}
 
-	public bool HasAnyPermission(params Guid[] permissions)
+	public bool HasAnyPermission(params TIdentity[] permissions)
 	{
 		return IdentityBase != null && IdentityBase.HasAnyPermission(permissions);
 	}
@@ -107,17 +108,17 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.HasAnyPermissionClaim(permissions);
 	}
 
-	public bool HasPermissionClaim(Guid permission)
+	public bool HasPermissionClaim(TIdentity permission)
 	{
 		return IdentityBase != null && IdentityBase.HasPermissionClaim(permission);
 	}
 
-	public bool HasAllPermissionClaims(params Guid[] permissions)
+	public bool HasAllPermissionClaims(params TIdentity[] permissions)
 	{
 		return IdentityBase != null && IdentityBase.HasAllPermissionClaims(permissions);
 	}
 
-	public bool HasAnyPermissionClaim(params Guid[] permissions)
+	public bool HasAnyPermissionClaim(params TIdentity[] permissions)
 	{
 		return IdentityBase != null && IdentityBase.HasAnyPermissionClaim(permissions);
 	}
@@ -188,7 +189,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return IdentityBase != null && IdentityBase.HasEnvelopeClaim(match);
 	}
 
-	public static EnvelopePrincipal? Create(string authenticationSchemeType, AuthenticatedUser authenticatedUser)
+	public static EnvelopePrincipal<TIdentity>? Create(string authenticationSchemeType, AuthenticatedUser<TIdentity> authenticatedUser)
 	{
 		if (string.IsNullOrWhiteSpace(authenticationSchemeType))
 			throw new ArgumentNullException(nameof(authenticationSchemeType));
@@ -201,16 +202,16 @@ public class EnvelopePrincipal : ClaimsPrincipal
 		return Create(claimsIdentity, authenticatedUser, true, true);
 	}
 
-	public static EnvelopePrincipal? Create(
+	public static EnvelopePrincipal<TIdentity>? Create(
 		IIdentity? identity,
-		AuthenticatedUser? authenticatedUser,
+		AuthenticatedUser<TIdentity>? authenticatedUser,
 		bool rolesToClams,
 		bool permissionsToClaims)
 	{
 		if (identity == null || authenticatedUser == null)
 			return null;
 
-		var envelopeIdentity = new EnvelopeIdentity(
+		var envelopeIdentity = new EnvelopeIdentity<TIdentity>(
 			identity,
 			authenticatedUser.UserId,
 			authenticatedUser.Login,
@@ -223,7 +224,7 @@ public class EnvelopePrincipal : ClaimsPrincipal
 			rolesToClams,
 			permissionsToClaims);
 
-		var EnvelopePrincipal = new EnvelopePrincipal(envelopeIdentity);
+		var EnvelopePrincipal = new EnvelopePrincipal<TIdentity>(envelopeIdentity);
 		return EnvelopePrincipal;
 	}
 }

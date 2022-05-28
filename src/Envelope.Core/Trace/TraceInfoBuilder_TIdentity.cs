@@ -3,20 +3,21 @@ using System.Security.Claims;
 
 namespace Envelope.Trace;
 
-public interface ITraceInfoBuilder<TBuilder>
-	where TBuilder : ITraceInfoBuilder<TBuilder>
+public interface ITraceInfoBuilder<TBuilder, TIdentity>
+	where TBuilder : ITraceInfoBuilder<TBuilder, TIdentity>
+	where TIdentity : struct
 {
 	//TBuilder Clone(
 	//	ITraceFrame currentTraceFrame,
 	//	ITraceInfo traceInfo);
 
-	ITraceInfo Build();
+	ITraceInfo<TIdentity> Build();
 
 	TBuilder RuntimeUniqueKey(Guid runtimeUniqueKey, bool force = false);
 
 	//TBuilder TraceFrame(ITraceFrame? traceFrame, bool force = false);
 
-	TBuilder IdUser(Guid? idUser, bool force = false);
+	TBuilder IdUser(TIdentity? idUser, bool force = false);
 
 	TBuilder Principal(ClaimsPrincipal? user, bool force = false);
 
@@ -25,13 +26,14 @@ public interface ITraceInfoBuilder<TBuilder>
 	TBuilder CorrelationId(Guid? correlationId, bool force = false);
 }
 
-public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilder>
-	where TBuilder : TraceInfoBuilderBase<TBuilder>
+public abstract class TraceInfoBuilderBase<TBuilder, TIdentity> : ITraceInfoBuilder<TBuilder, TIdentity>
+	where TBuilder : TraceInfoBuilderBase<TBuilder, TIdentity>
+	where TIdentity : struct
 {
 	private readonly TBuilder _builder;
-	protected TraceInfo _traceInfo;
+	protected TraceInfo<TIdentity> _traceInfo;
 
-	protected TraceInfoBuilderBase(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+	protected TraceInfoBuilderBase(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo<TIdentity>? previousTraceInfo)
 	{
 		if (currentTraceFrame == null)
 			throw new ArgumentNullException(nameof(currentTraceFrame));
@@ -47,11 +49,11 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 
 		if (previousTraceInfo == null)
 		{
-			_traceInfo = new TraceInfo(sourceSystemName ?? previousTraceInfo?.SourceSystemName!, traceFrameBuilder.Build());
+			_traceInfo = new TraceInfo<TIdentity>(sourceSystemName ?? previousTraceInfo?.SourceSystemName!, traceFrameBuilder.Build());
 		}
 		else
 		{
-			_traceInfo = new TraceInfo(sourceSystemName ?? previousTraceInfo.SourceSystemName, traceFrameBuilder.Build())
+			_traceInfo = new TraceInfo<TIdentity>(sourceSystemName ?? previousTraceInfo.SourceSystemName, traceFrameBuilder.Build())
 			{
 				RuntimeUniqueKey = previousTraceInfo.RuntimeUniqueKey,
 				IdUser = previousTraceInfo.IdUser,
@@ -64,7 +66,7 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 		_builder = (TBuilder)this;
 	}
 
-	public ITraceInfo Build()
+	public ITraceInfo<TIdentity> Build()
 		=> _traceInfo;
 
 	public TBuilder RuntimeUniqueKey(Guid runtimeUniqueKey, bool force = false)
@@ -75,13 +77,13 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 		return _builder;
 	}
 
-	public TBuilder IdUser(Guid? idUser, bool force = false)
+	public TBuilder IdUser(TIdentity? idUser, bool force = false)
 	{
 		if (force || !_traceInfo.IdUser.HasValue)
 		{
 			var principalUserId = _traceInfo.Principal?.IdentityBase?.UserId;
 			if (principalUserId.HasValue && !principalUserId.Value.Equals(idUser))
-				throw new InvalidOperationException($"{nameof(TraceInfo)} has already set {nameof(TraceInfo.Principal)} with {nameof(TraceInfo.IdUser)} == {principalUserId}");
+				throw new InvalidOperationException($"{nameof(TraceInfo<TIdentity>)} has already set {nameof(TraceInfo<TIdentity>.Principal)} with {nameof(TraceInfo<TIdentity>.IdUser)} == {principalUserId}");
 
 			_traceInfo.IdUser = idUser;
 		}
@@ -91,18 +93,18 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 
 	public TBuilder Principal(ClaimsPrincipal? principal, bool force = false)
 	{
-		Guid? idUser = null;
+		TIdentity? idUser = null;
 
 		if (force || _traceInfo.Principal == null)
 		{
-			if (principal is not EnvelopePrincipal EnvelopePrincipal)
+			if (principal is not EnvelopePrincipal<TIdentity> EnvelopePrincipal)
 				return _builder;
 
 			idUser = EnvelopePrincipal.IdentityBase?.UserId;
 			if (_traceInfo.IdUser.HasValue)
 			{
 				if (!_traceInfo.IdUser.Value.Equals(idUser))
-					throw new InvalidOperationException($"{nameof(TraceInfo)} has already set {nameof(TraceInfo.IdUser)} to {_traceInfo.IdUser}");
+					throw new InvalidOperationException($"{nameof(TraceInfo<TIdentity>)} has already set {nameof(TraceInfo<TIdentity>.IdUser)} to {_traceInfo.IdUser}");
 			}
 
 			_traceInfo.Principal = EnvelopePrincipal;
@@ -129,19 +131,20 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 	}
 }
 
-public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
+public sealed class TraceInfoBuilder<TIdentity> : TraceInfoBuilderBase<TraceInfoBuilder<TIdentity>, TIdentity>
+	where TIdentity : struct
 {
-	//public TraceInfoBuilder(ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+	//public TraceInfoBuilder(ITraceFrame currentTraceFrame, ITraceInfo<TIdentity>? previousTraceInfo)
 	//	: this(previousTraceInfo?.SourceSystemName ?? "SYSTEM", currentTraceFrame, previousTraceInfo)
 	//{
 	//}
 
-	public TraceInfoBuilder(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+	public TraceInfoBuilder(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo<TIdentity>? previousTraceInfo)
 		: base(sourceSystemName, currentTraceFrame, previousTraceInfo)
 	{
 	}
 
-	public static implicit operator TraceInfo?(TraceInfoBuilder builder)
+	public static implicit operator TraceInfo<TIdentity>?(TraceInfoBuilder<TIdentity> builder)
 	{
 		if (builder == null)
 			return null;

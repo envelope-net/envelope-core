@@ -6,40 +6,15 @@ using System.Runtime.CompilerServices;
 
 namespace Envelope;
 
-public interface IApplicationContext<TIdentity>
-	where TIdentity : struct
-{
-	string SourceSystemName { get; }
-	ITraceInfo<TIdentity> TraceInfo { get; }
-	IApplicationResources ApplicationResources { get; }
-	IRequestMetadata? RequestMetadata { get; }
-	IDictionary<string, object?> Items { get; }
-
-	ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame);
-
-	ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, TIdentity? idUser);
-
-	ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, EnvelopePrincipal<TIdentity>? principal);
-
-	ITraceInfo<TIdentity> Next(
-		IEnumerable<MethodParameter>? methodParameters = null,
-		[CallerMemberName] string memberName = "",
-		[CallerFilePath] string sourceFilePath = "",
-		[CallerLineNumber] int sourceLineNumber = 0);
-
-	ITraceInfo<TIdentity> Next(ITraceFrame traceFrame);
-}
-
-public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
-	where TIdentity : struct
+public class ApplicationContext : IApplicationContext
 {
 	public string SourceSystemName { get; }
-	public ITraceInfo<TIdentity> TraceInfo { get; private set; }
+	public ITraceInfo TraceInfo { get; private set; }
 	public IApplicationResources ApplicationResources { get; }
 	public IRequestMetadata? RequestMetadata { get; }
 	public IDictionary<string, object?> Items { get; }
 
-	public ApplicationContext(ITraceInfo<TIdentity> traceInfo, IApplicationResources applicationResources, IRequestMetadata? requestMetadata)
+	public ApplicationContext(ITraceInfo traceInfo, IApplicationResources applicationResources, IRequestMetadata? requestMetadata)
 	{
 		TraceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
 		SourceSystemName = traceInfo.SourceSystemName;
@@ -49,28 +24,28 @@ public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
 	}
 
 	private readonly object _lockTrace = new();
-	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame)
+	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
 				.Build();
 		}
 
 		return TraceInfo;
 	}
 
-	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, TIdentity? idUser)
+	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame, Guid? idUser)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
 				.IdUser(idUser)
 				.Build();
 		}
@@ -78,14 +53,14 @@ public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
 		return TraceInfo;
 	}
 
-	public ITraceInfo<TIdentity> AddTraceFrame(ITraceFrame traceFrame, EnvelopePrincipal<TIdentity>? principal)
+	public ITraceInfo AddTraceFrame(ITraceFrame traceFrame, EnvelopePrincipal? principal)
 	{
 		if (traceFrame == null)
 			throw new ArgumentNullException(nameof(traceFrame));
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
 				.Principal(principal)
 				.Build();
 		}
@@ -93,7 +68,7 @@ public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
 		return TraceInfo;
 	}
 
-	public ITraceInfo<TIdentity> Next(
+	public ITraceInfo Next(
 		IEnumerable<MethodParameter>? methodParameters = null,
 		[CallerMemberName] string memberName = "",
 		[CallerFilePath] string sourceFilePath = "",
@@ -105,7 +80,7 @@ public class ApplicationContext<TIdentity> : IApplicationContext<TIdentity>
 				.MethodParameters(methodParameters)
 				.Build());
 
-	public ITraceInfo<TIdentity> Next(ITraceFrame traceFrame)
-		=> new TraceInfoBuilder<TIdentity>(SourceSystemName, traceFrame, TraceInfo)
+	public ITraceInfo Next(ITraceFrame traceFrame)
+		=> new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
 			.Build();
 }

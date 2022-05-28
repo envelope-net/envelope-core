@@ -2,25 +2,26 @@
 
 namespace Envelope.Identity;
 
-public class AuthenticatedUser
+public class AuthenticatedUser<TIdentity>
+	where TIdentity : struct
 {
-	public Guid UserId { get; }
+	public TIdentity UserId { get; }
 	public string Login { get; }
 	public string DisplayName { get; }
 	public object? UserData { get; set; }
 	public List<string>? Roles { get; set; }
 	public List<string>? Permissions { get; set; }
-	public List<Guid>? RoleIds { get; set; }
-	public List<Guid>? PermissionIds { get; set; }
+	public List<TIdentity>? RoleIds { get; set; }
+	public List<TIdentity>? PermissionIds { get; set; }
 
-	public ITraceInfo TraceInfo { get; }
+	public ITraceInfo<TIdentity> TraceInfo { get; }
 
 	public string? Password { get; set; }
 	public string? Salt { get; set; }
 	public string? Error { get; set; }
 	public string? PasswordTemporaryUrlSlug { get; set; }
 
-	public AuthenticatedUser(Guid userId, string login, string? displayName, ITraceInfo traceInfo)
+	public AuthenticatedUser(TIdentity userId, string login, string? displayName, ITraceInfo<TIdentity> traceInfo)
 	{
 		UserId = userId;
 		Login = string.IsNullOrWhiteSpace(login)
@@ -33,11 +34,12 @@ public class AuthenticatedUser
 	}
 }
 
-public class AnonymousUser : AuthenticatedUser
+public class AnonymousUser<TIdentity> : AuthenticatedUser<TIdentity>
+	where TIdentity : struct
 {
 	public const string AnonymousEnvelopeUserName = "AnonymousEnvelopeUser";
 
-	public AnonymousUser(ITraceInfo traceInfo, Guid userId = default)
+	public AnonymousUser(ITraceInfo<TIdentity> traceInfo, TIdentity userId = default)
 		: base(userId, AnonymousEnvelopeUserName, null, traceInfo)
 	{
 	}
