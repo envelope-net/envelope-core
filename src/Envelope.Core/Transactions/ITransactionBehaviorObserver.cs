@@ -5,11 +5,11 @@ public interface ITransactionBehaviorObserver : Observables.IObserver, IDisposab
 	, IAsyncDisposable
 #endif
 {
-	void Commit(ITransactionContext transactionContext);
+	void Commit(ITransactionManager transactionManager);
 
-	Task CommitAsync(ITransactionContext transactionContext, CancellationToken cancellationToken);
+	Task CommitAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
 
-	void Rollback(ITransactionContext transactionContext, Exception? exception);
+	void Rollback(ITransactionManager transactionManager, Exception? exception);
 
-	Task RollbackAsync(ITransactionContext transactionContext, Exception? exception, CancellationToken cancellationToken);
+	Task RollbackAsync(ITransactionManager transactionManager, Exception? exception, CancellationToken cancellationToken);
 }

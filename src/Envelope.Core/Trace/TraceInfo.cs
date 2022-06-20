@@ -10,7 +10,7 @@ public class TraceInfo : ITraceInfo
 
 	public string SourceSystemName { get; internal set; }
 
-	public ITraceFrame TraceFrame { get; }
+	public ITraceFrame TraceFrame { get; internal set; }
 
 	public EnvelopePrincipal? Principal { get; internal set; }
 
@@ -21,6 +21,14 @@ public class TraceInfo : ITraceInfo
 	public string? ExternalCorrelationId { get; internal set; }
 
 	public Guid? CorrelationId { get; internal set; }
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+	
+	internal TraceInfo()
+	{
+	}
+
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 	internal TraceInfo(string sourceSystemName, ITraceFrame traceFrame)
 	{

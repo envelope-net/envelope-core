@@ -5,7 +5,7 @@ namespace Envelope.Transactions;
 public interface ITransactionBehaviorObserverConnector
 {
 	/// <summary>
-	/// Connect an transaction manager
+	/// Connect an transaction observer
 	/// </summary>
-	IConnectHandle ConnectTransactionManager(ITransactionBehaviorObserver manager);
+	IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver manager);
 }

@@ -6,7 +6,7 @@ namespace Envelope.Transactions.Internal;
 internal class TransactionBehaviorObserverConnector : ObservableConnector<ITransactionBehaviorObserver>, ITransactionBehaviorObserverConnector
 {
 	/// <inheritdoc/>
-	public IConnectHandle ConnectTransactionManager(ITransactionBehaviorObserver manager)
+	public IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver manager)
 	{
 		try
 		{
