@@ -1,6 +1,6 @@
-﻿namespace Envelope.Data;
+﻿namespace Envelope.Data.Internal;
 
-public class BatchWriterOptions : IBatchWriterOptions
+internal class BatchWriterOptions : IBatchWriterOptions
 {
 	/// <summary>
 	/// Eagerly write the first received event to the database to check, if database table is ready

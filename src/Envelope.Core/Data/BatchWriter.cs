@@ -1,4 +1,5 @@
 ﻿using Envelope.Collections;
+using Envelope.Data.Internal;
 using Envelope.Infrastructure;
 using System.Diagnostics;
 
@@ -58,7 +59,7 @@ public class BatchWriter<T> : IBatchWriter<T>, IDisposable
 	public BatchWriter(
 		Func<T, bool>? includeCallBack,
 		Func<IEnumerable<T>, CancellationToken, Task<ulong>>? writeBatchCallback,
-		BatchWriterOptions? options,
+		IBatchWriterOptions? options,
 		Action<string, object?, object?, object?>? errorLogger = null) // errorLogger = Action<format, arg0, arg1, arg2>
 		: this(options, errorLogger)
 	{

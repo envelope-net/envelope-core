@@ -2,15 +2,15 @@
 
 public interface ITransactionObserver : Observables.IObserver
 {
-	void PreCommit(ITransactionContext transactionContext);
-	void PostCommit(ITransactionContext transactionContext);
-	void PreRollback(ITransactionContext transactionContext, Exception? exception);
-	void PostRollback(ITransactionContext transactionContext);
-	void RollbackFault(ITransactionContext transactionContext, Exception exception);
+	void PreCommit(ITransactionManager transactionManager);
+	void PostCommit(ITransactionManager transactionManager);
+	void PreRollback(ITransactionManager transactionManager, Exception? exception);
+	void PostRollback(ITransactionManager transactionManager);
+	void RollbackFault(ITransactionManager transactionManager, Exception exception);
 
-	Task PreCommitAsync(ITransactionContext transactionContext, CancellationToken cancellationToken);
-	Task PostCommitAsync(ITransactionContext transactionContext, CancellationToken cancellationToken);
-	Task PreRollbackAsync(ITransactionContext transactionContext, Exception? exception, CancellationToken cancellationToken);
-	Task PostRollbackAsync(ITransactionContext transactionContext, CancellationToken cancellationToken);
-	Task RollbackFaultAsync(ITransactionContext transactionContext, Exception exception, CancellationToken cancellationToken);
+	Task PreCommitAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
+	Task PostCommitAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
+	Task PreRollbackAsync(ITransactionManager transactionManager, Exception? exception, CancellationToken cancellationToken);
+	Task PostRollbackAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
+	Task RollbackFaultAsync(ITransactionManager transactionManager, Exception exception, CancellationToken cancellationToken);
 }

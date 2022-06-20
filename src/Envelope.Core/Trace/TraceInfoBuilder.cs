@@ -47,7 +47,7 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 
 		if (previousTraceInfo == null)
 		{
-			_traceInfo = new TraceInfo(sourceSystemName ?? previousTraceInfo?.SourceSystemName!, traceFrameBuilder.Build());
+			_traceInfo = new TraceInfo(sourceSystemName, traceFrameBuilder.Build());
 		}
 		else
 		{
