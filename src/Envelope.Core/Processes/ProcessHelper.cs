@@ -9,6 +9,7 @@ public static class ProcessHelper
 		string executablePath,
 		string? arguments,
 		out bool errorOccured,
+		bool waitForExit = true,
 		bool hidden = true)
 	{
 		if (string.IsNullOrWhiteSpace(executablePath))
@@ -55,22 +56,27 @@ public static class ProcessHelper
 				return $"{nameof(process)} == null";
 			}
 
-			var sb = new StringBuilder();
-			process.WaitForExit();
-			var num = process.ExitCode;
-			string? outMsg = process.StandardOutput.ReadToEnd()?.Replace("\0", "");
-			string? errorMsg = process.StandardError.ReadToEnd()?.Replace("\0", "");
+			if (waitForExit)
+			{
+				process.WaitForExit();
+				var num = process.ExitCode;
+				errorOccured = num != 0;
 
-			if (!string.IsNullOrEmpty(errorMsg))
-				sb.AppendLine(errorMsg);
-			
-			if (!string.IsNullOrEmpty(outMsg))
-				sb.AppendLine(outMsg);
+				var sb = new StringBuilder();
 
-			errorOccured = num != 0;
-			msg = sb.ToString();
-			if (string.IsNullOrWhiteSpace(msg))
-				msg = null;
+				string? outMsg = process.StandardOutput.ReadToEnd()?.Replace("\0", "");
+				string? errorMsg = process.StandardError.ReadToEnd()?.Replace("\0", "");
+
+				if (!string.IsNullOrEmpty(errorMsg))
+					sb.AppendLine(errorMsg);
+
+				if (!string.IsNullOrEmpty(outMsg))
+					sb.AppendLine(outMsg);
+
+				msg = sb.ToString();
+				if (string.IsNullOrWhiteSpace(msg))
+					msg = null;
+			}
 		}
 		catch (Exception ex)
 		{
