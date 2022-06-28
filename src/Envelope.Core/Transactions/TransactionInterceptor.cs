@@ -2,7 +2,7 @@
 
 namespace Envelope.Transactions;
 
-public class TransactionInterceptor
+public partial class TransactionInterceptor
 {
 	protected const string UnhandledExceptionInfo = "Unhandled exception";
 	protected const string DefaultRollbackErrorInfo = "Rollback error";
@@ -12,21 +12,30 @@ public class TransactionInterceptor
 	public IServiceProvider ServiceProvider { get; }
 	public ITransactionManagerFactory TransactionManagerFactory { get; }
 	public Func<IServiceProvider, ITransactionManager, Task<ITransactionContext>> TransactionContextFactory { get; }
+	public Func<IServiceProvider, ITransactionManager, ITransactionContext> SyncTransactionContextFactory { get; }
 
 	public TransactionInterceptor(
 		IServiceProvider serviceProvider,
 		ITransactionManagerFactory transactionManagerFactory,
-		Func<IServiceProvider, ITransactionManager, Task<ITransactionContext>> transactionContextFactory)
+		Func<IServiceProvider, ITransactionManager, Task<ITransactionContext>> transactionContextFactory,
+		Func<IServiceProvider, ITransactionManager, ITransactionContext> syncTransactionContextFactory)
 	{
 		ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 		TransactionManagerFactory = transactionManagerFactory ?? throw new ArgumentNullException(nameof(transactionManagerFactory));
 		TransactionContextFactory = transactionContextFactory ?? throw new ArgumentNullException(nameof(transactionContextFactory));
+		SyncTransactionContextFactory = syncTransactionContextFactory ?? throw new ArgumentNullException(nameof(syncTransactionContextFactory));
 	}
 
 	protected Task<ITransactionContext> CreateTransactionContextAsync()
 	{
 		var transactionManager = TransactionManagerFactory.Create();
 		return TransactionContextFactory(ServiceProvider, transactionManager);
+	}
+
+	protected ITransactionContext CreateTransactionContext()
+	{
+		var transactionManager = TransactionManagerFactory.Create();
+		return SyncTransactionContextFactory(ServiceProvider, transactionManager);
 	}
 
 	public virtual async Task ExecuteAsync(

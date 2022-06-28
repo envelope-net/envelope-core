@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Envelope.Validation;
+﻿namespace Envelope.Validation;
 
 public interface IValidable
 {
@@ -11,5 +9,5 @@ public interface IValidable
 	/// <param name="parentErrorBuffer">Errors catched by parent</param>
 	/// <param name="validationContext">Custom objects to control validation</param>
 	/// <returns>Null, if no error, StringBuilder with formatted errors</returns>
-	StringBuilder? Validate(string? propertyPrefix = null, StringBuilder? parentErrorBuffer = null, Dictionary<string, object>? validationContext = null);
+	List<IValidationMessage>? Validate(string? propertyPrefix = null, List<IValidationMessage>? parentErrorBuffer = null, Dictionary<string, object>? validationContext = null);
 }
