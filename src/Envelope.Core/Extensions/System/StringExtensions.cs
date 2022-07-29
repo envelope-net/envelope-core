@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using System;
 
 namespace Envelope.Extensions;
 
@@ -838,6 +837,15 @@ public static class StringExtensions
 
 	public static string ToCammelCase(this string text, bool strictCammelCase = false, bool removeUnderscores = true, bool throwIfEmpty = true)
 		=> StringHelper.ToCammelCase(text, strictCammelCase, removeUnderscores, throwIfEmpty);
+
+	public static string ToSnakeCase(this string text, bool throwIfEmpty = true)
+		=> StringHelper.ToSnakeCase(text, throwIfEmpty);
+
+	public static string ToKebabCase(this string text, bool throwIfEmpty = true)
+		=> StringHelper.ToKebabCase(text, throwIfEmpty);
+
+	public static string ToDelimitedCase(this string text, char delimiter, bool throwIfEmpty = true)
+		=> StringHelper.ToDelimitedCase(text, delimiter, throwIfEmpty);
 
 	public static MemoryStream ToMemoryStream(this string text, Encoding? encoding = null)
 	{

@@ -1,4 +1,5 @@
 ﻿using Envelope.Extensions;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
@@ -43,14 +44,70 @@ public class CharInfo
 
 public static class StringHelper
 {
+	public class CharDefinition
+	{
+		public char Char { get; }
+		public bool IsWhiteSpace { get; }
+		public bool IsDigit { get; }
+		public bool IsLower { get; }
+		public bool IsUpper { get; }
+		public bool IsInvalid { get; }
+
+		public CharDefinition(char @char)
+		{
+			Char = @char;
+			IsDigit = DIGITS.Contains(@char);
+			if (IsDigit)
+			{
+				IsLower = false;
+				IsUpper = false;
+				IsWhiteSpace = false;
+			}
+			else
+			{
+				IsLower = LOWER_CHARS.Contains(@char);
+				if (IsLower)
+				{
+					IsUpper = false;
+					IsWhiteSpace = false;
+				}
+				else
+				{
+					IsUpper = UPPER_CHARS.Contains(@char);
+					if (IsUpper)
+					{
+						IsWhiteSpace = false;
+					}
+					else
+					{
+						IsWhiteSpace = char.IsWhiteSpace(@char);
+						if (!IsWhiteSpace)
+							IsInvalid = true;
+					}
+				}
+			}
+		}
+	}
+
+	public static class CharDefinitionCache
+	{
+		private static readonly ConcurrentDictionary<char, CharDefinition> _cache = new();
+
+		public static CharDefinition GetCharDefinition(char @char)
+			=> _cache.AddOrGet(@char, ch => new CharDefinition(ch));
+	}
+
 	public const string DIGITS = @"0123456789";
 	public const string AVAILABLE_FIRST_CHARS = @"ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+	public const string UPPER_CHARS = @"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	public const string LOWER_CHARS = @"abcdefghijklmnopqrstuvwxyz";
 	public const string AVAILABLE_CHARS = @"ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
 	public const string AVAILABLE_CHARS_NoUnderscore = @"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 	public static string ToCammelCase(string text, bool strictCammelCase = false, bool removeUnderscores = true, bool throwIfEmpty = true)
 	{
-		if (string.IsNullOrWhiteSpace(text)) return text;
+		if (string.IsNullOrWhiteSpace(text))
+			return text;
 
 		var digits = new List<char>(DIGITS.ToCharArray());
 		var firstChars = new List<char>(AVAILABLE_FIRST_CHARS.ToCharArray());
@@ -70,7 +127,7 @@ public static class StringHelper
 		bool isFirst = true;
 		bool toUpper = false;
 		text = RemoveAccents(text);
-		foreach (char ch in text.ToCharArray())
+		foreach (var ch in text.ToCharArray())
 		{
 			if (isFirst)
 			{
@@ -152,6 +209,208 @@ public static class StringHelper
 			return "_";
 
 		return result;
+	}
+
+	public static string ToSnakeCase(string text, bool throwIfEmpty = true)
+		=> ToDelimitedCase(text, '_', throwIfEmpty);
+
+	public static string ToKebabCase(string text, bool throwIfEmpty = true)
+		=> ToDelimitedCase(text, '-', throwIfEmpty);
+
+	public static string ToDelimitedCase(string text, char delimiter, bool throwIfEmpty = true)
+	{
+		if (string.IsNullOrWhiteSpace(text))
+			return text;
+
+		var sb = new StringBuilder();
+
+		text = RemoveAccents(text);
+		var charArray = text.ToCharArray();
+		var charDefinitionArray = new CharDefinition[charArray.Length];
+		for (int i = 0; i < charArray.Length; i++)
+			charDefinitionArray[i] = CharDefinitionCache.GetCharDefinition(charArray[i]);
+
+		var current = charDefinitionArray[0];
+		if (current.IsDigit || current.IsLower)
+		{
+			sb.Append(current.Char);
+		}
+		else if (current.IsUpper)
+		{
+			sb.Append(char.ToLower(current.Char));
+		}
+
+		for (int i = 1; i < charDefinitionArray.Length; i++)
+		{
+			current = charDefinitionArray[i];
+			var before = charDefinitionArray[i - 1];
+
+			if (i == charDefinitionArray.Length - 1) //last
+			{
+				if (current.IsLower)
+				{
+					if (before.IsLower)
+					{
+						sb.Append(current.Char);
+					}
+					else if (before.IsUpper)
+					{
+						sb.Append(current.Char);
+					}
+					else if (before.IsDigit)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+				}
+				else if (current.IsUpper)
+				{
+					if (before.IsLower)
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+					else if (before.IsUpper)
+					{
+						sb.Append(char.ToLower(current.Char));
+					}
+					else if (before.IsDigit)
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+				}
+				else if (current.IsDigit)
+				{
+					if (before.IsLower)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+					else if (before.IsUpper)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+					else if (before.IsDigit)
+					{
+						sb.Append(current.Char);
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+				}
+			}
+			else //in the middle
+			{
+				var after = charDefinitionArray[i + 1];
+				if (current.IsLower)
+				{
+					if (before.IsLower)
+					{
+						sb.Append(current.Char);
+					}
+
+					else if (before.IsUpper)
+					{
+						sb.Append(current.Char);
+					}
+
+					else if (before.IsDigit)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+				}
+				else if (current.IsUpper)
+				{
+					if (before.IsLower)
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+
+					else if (before.IsUpper)
+					{
+						if (after.IsLower)
+						{
+							AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+						}
+						else if (after.IsUpper)
+						{
+							sb.Append(char.ToLower(current.Char));
+						}
+						else if (after.IsDigit)
+						{
+							sb.Append(char.ToLower(current.Char));
+						}
+						else
+						{
+							sb.Append(char.ToLower(current.Char));
+						}
+					}
+
+					else if (before.IsDigit)
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, char.ToLower(current.Char));
+					}
+				}
+				else if (current.IsDigit)
+				{
+					if (before.IsLower)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+
+					else if (before.IsUpper)
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+
+					else if (before.IsDigit)
+					{
+						sb.Append(current.Char);
+					}
+					else
+					{
+						AppendWithDelimiter(sb, delimiter, current.Char);
+					}
+				}
+			}
+		}
+
+		string normalizedText = sb.ToString();
+
+		if (string.IsNullOrWhiteSpace(normalizedText))
+		{
+			if (throwIfEmpty)
+				throw new Exception("Text '" + text + "' cannot be normalized.");
+			else
+				normalizedText = "_";
+		}
+
+		if (string.IsNullOrWhiteSpace(normalizedText))
+			return "_";
+
+		return normalizedText;
+	}
+
+	private static void AppendWithDelimiter(StringBuilder sb, char delimiter, char @char)
+	{
+		if (sb.Length == 0)
+			sb.Append(@char);
+		else
+			sb.Append($"{delimiter}{@char}");
 	}
 
 	public static List<CharInfo>? GetCharInfos(List<char> chars)

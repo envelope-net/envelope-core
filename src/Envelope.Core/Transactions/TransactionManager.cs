@@ -64,37 +64,37 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 		if (_rollbackRaised)
 			throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
 
-		lock (_lock)
-		{
-			if (_disposed)
-				throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
-
-			if (_commitRaised)
-				throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
-
-			if (_rollbackRaised)
-				throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
-
-			_transactionBehaviorObserverConnector.Lock();
-			_transactionObserverConnector.Lock();
-
-			_commitRaised = true;
-
-			_transactionObserverConnector.ForEach(x => x.PreCommit(this));
-
-			try
+		//try
+		//{
+			lock (_lock)
 			{
+				if (_disposed)
+					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+
+				if (_commitRaised)
+					throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+
+				if (_rollbackRaised)
+					throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+
+				_transactionBehaviorObserverConnector.Lock();
+				_transactionObserverConnector.Lock();
+
+				_commitRaised = true;
+
+				_transactionObserverConnector.ForEach(x => x.PreCommit(this));
+
 				_transactionBehaviorObserverConnector.ForEach(x => x.Commit(this));
-			}
-			catch (Exception ex)
-			{
-				Rollback(ex);
-				return false;
-			}
 
-			_transactionObserverConnector.ForEach(x => x.PostCommit(this));
-			return true;
-		}
+				_transactionObserverConnector.ForEach(x => x.PostCommit(this));
+				return true;
+			}
+		//}
+		//catch (Exception ex)
+		//{
+		//	Rollback(ex);
+		//	return false;
+		//}
 	}
 
 	/// <inheritdoc/>
@@ -109,37 +109,37 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 		if (_rollbackRaised)
 			throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
 
-		using(await _asyncLock.LockAsync().ConfigureAwait(false))
-		{
-			if (_disposed)
-				throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
-
-			if (_commitRaised)
-				throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
-
-			if (_rollbackRaised)
-				throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
-
-			_transactionBehaviorObserverConnector.Lock();
-			_transactionObserverConnector.Lock();
-
-			_commitRaised = true;
-
-			await _transactionObserverConnector.ForEachAsync(x => x.PreCommitAsync(this, cancellationToken)).ConfigureAwait(false);
-
-			try
+		//try
+		//{
+			using (await _asyncLock.LockAsync().ConfigureAwait(false))
 			{
+				if (_disposed)
+					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+
+				if (_commitRaised)
+					throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+
+				if (_rollbackRaised)
+					throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+
+				_transactionBehaviorObserverConnector.Lock();
+				_transactionObserverConnector.Lock();
+
+				_commitRaised = true;
+
+				await _transactionObserverConnector.ForEachAsync(x => x.PreCommitAsync(this, cancellationToken)).ConfigureAwait(false);
+
 				await _transactionBehaviorObserverConnector.ForEachAsync(x => x.CommitAsync(this, cancellationToken)).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				await RollbackAsync(ex, cancellationToken).ConfigureAwait(false);
-				return false;
-			}
 
-			await _transactionObserverConnector.ForEachAsync(x => x.PostCommitAsync(this, cancellationToken)).ConfigureAwait(false);
-			return true;
-		}
+				await _transactionObserverConnector.ForEachAsync(x => x.PostCommitAsync(this, cancellationToken)).ConfigureAwait(false);
+				return true;
+			}
+		//}
+		//catch (Exception ex)
+		//{
+		//	await RollbackAsync(ex, cancellationToken).ConfigureAwait(false);
+		//	return false;
+		//}
 	}
 
 	/// <inheritdoc/>
