@@ -136,6 +136,19 @@ public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
 	//{
 	//}
 
+	public TraceInfoBuilder(IServiceProvider serviceProvider, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+		: this((serviceProvider.GetService(TraceInfo.ApplicationContextType) as IApplicationContext)!, currentTraceFrame, previousTraceInfo)
+	{
+	}
+
+	public TraceInfoBuilder(IApplicationContext applicationContext, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+		: base(
+			applicationContext?.TraceInfo.SourceSystemName ?? throw new ArgumentNullException(nameof(applicationContext)),
+			currentTraceFrame,
+			previousTraceInfo ?? applicationContext.TraceInfo)
+	{
+	}
+
 	public TraceInfoBuilder(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
 		: base(sourceSystemName, currentTraceFrame, previousTraceInfo)
 	{

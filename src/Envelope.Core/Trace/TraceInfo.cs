@@ -6,6 +6,8 @@ namespace Envelope.Trace;
 
 public class TraceInfo : ITraceInfo
 {
+	internal static readonly Type ApplicationContextType = typeof(IApplicationContext);
+
 	public Guid RuntimeUniqueKey { get; internal set; }
 
 	public string SourceSystemName { get; internal set; }
@@ -44,6 +46,36 @@ public class TraceInfo : ITraceInfo
 		=> $"{SourceSystemName} {TraceFrame}{Environment.NewLine} {nameof(RuntimeUniqueKey)} = {RuntimeUniqueKey} | {nameof(CorrelationId)} = {CorrelationId} | {nameof(IdUser)} = {IdUser}";
 
 	public static ITraceInfo Create(
+		IServiceProvider serviceProvider,
+		IEnumerable<MethodParameter>? methodParameters = null,
+		[CallerMemberName] string memberName = "",
+		[CallerFilePath] string sourceFilePath = "",
+		[CallerLineNumber] int sourceLineNumber = 0)
+		=> serviceProvider != null
+			? Create(
+				serviceProvider.GetService(ApplicationContextType) as IApplicationContext
+					?? throw new InvalidOperationException($"{ApplicationContextType.FullName} is not registered to services."),
+				methodParameters,
+				memberName,
+				sourceFilePath,
+				sourceLineNumber)
+			: throw new ArgumentNullException(nameof(serviceProvider));
+
+	public static ITraceInfo Create(
+		IApplicationContext applicationContext,
+		IEnumerable<MethodParameter>? methodParameters = null,
+		[CallerMemberName] string memberName = "",
+		[CallerFilePath] string sourceFilePath = "",
+		[CallerLineNumber] int sourceLineNumber = 0)
+		=> Create(
+			applicationContext.TraceInfo,
+			null,
+			methodParameters,
+			memberName,
+			sourceFilePath,
+			sourceLineNumber);
+
+	public static ITraceInfo Create(
 		string sourceSystemName,
 		EnvelopePrincipal? principal = null,
 		Guid? correlationId = null,
@@ -64,27 +96,27 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
-		string sourceSystemName,
-		ITraceFrame? previousTraceFrame,
-		EnvelopePrincipal? principal = null,
-		Guid? correlationId = null,
-		IEnumerable<MethodParameter>? methodParameters = null,
-		[CallerMemberName] string memberName = "",
-		[CallerFilePath] string sourceFilePath = "",
-		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
-				sourceSystemName,
-				new TraceFrameBuilder(previousTraceFrame)
-					.CallerMemberName(memberName)
-					.CallerFilePath(sourceFilePath)
-					.CallerLineNumber(sourceLineNumber == 0 ? (int?)null : sourceLineNumber)
-					.MethodParameters(methodParameters)
-					.Build(),
-				null)
-				.Principal(principal)
-				.CorrelationId(correlationId)
-			.Build();
+	//public static ITraceInfo Create(
+	//	string sourceSystemName,
+	//	ITraceFrame? previousTraceFrame,
+	//	EnvelopePrincipal? principal = null,
+	//	Guid? correlationId = null,
+	//	IEnumerable<MethodParameter>? methodParameters = null,
+	//	[CallerMemberName] string memberName = "",
+	//	[CallerFilePath] string sourceFilePath = "",
+	//	[CallerLineNumber] int sourceLineNumber = 0)
+	//	=> new TraceInfoBuilder(
+	//			sourceSystemName,
+	//			new TraceFrameBuilder(previousTraceFrame)
+	//				.CallerMemberName(memberName)
+	//				.CallerFilePath(sourceFilePath)
+	//				.CallerLineNumber(sourceLineNumber == 0 ? (int?)null : sourceLineNumber)
+	//				.MethodParameters(methodParameters)
+	//				.Build(),
+	//			null)
+	//			.Principal(principal)
+	//			.CorrelationId(correlationId)
+	//		.Build();
 
 	public static ITraceInfo Create(
 		string sourceSystemName,
@@ -107,27 +139,27 @@ public class TraceInfo : ITraceInfo
 				.CorrelationId(correlationId)
 			.Build();
 
-	public static ITraceInfo Create(
-		string sourceSystemName,
-		ITraceFrame? previousTraceFrame,
-		Guid? iduser,
-		Guid? correlationId = null,
-		IEnumerable<MethodParameter>? methodParameters = null,
-		[CallerMemberName] string memberName = "",
-		[CallerFilePath] string sourceFilePath = "",
-		[CallerLineNumber] int sourceLineNumber = 0)
-		=> new TraceInfoBuilder(
-				sourceSystemName,
-				new TraceFrameBuilder(previousTraceFrame)
-					.CallerMemberName(memberName)
-					.CallerFilePath(sourceFilePath)
-					.CallerLineNumber(sourceLineNumber == 0 ? (int?)null : sourceLineNumber)
-					.MethodParameters(methodParameters)
-					.Build(),
-				null)
-				.IdUser(iduser)
-				.CorrelationId(correlationId)
-			.Build();
+	//public static ITraceInfo Create(
+	//	string sourceSystemName,
+	//	ITraceFrame? previousTraceFrame,
+	//	Guid? iduser,
+	//	Guid? correlationId = null,
+	//	IEnumerable<MethodParameter>? methodParameters = null,
+	//	[CallerMemberName] string memberName = "",
+	//	[CallerFilePath] string sourceFilePath = "",
+	//	[CallerLineNumber] int sourceLineNumber = 0)
+	//	=> new TraceInfoBuilder(
+	//			sourceSystemName,
+	//			new TraceFrameBuilder(previousTraceFrame)
+	//				.CallerMemberName(memberName)
+	//				.CallerFilePath(sourceFilePath)
+	//				.CallerLineNumber(sourceLineNumber == 0 ? (int?)null : sourceLineNumber)
+	//				.MethodParameters(methodParameters)
+	//				.Build(),
+	//			null)
+	//			.IdUser(iduser)
+	//			.CorrelationId(correlationId)
+	//		.Build();
 
 	public static ITraceInfo Create(
 		ITraceInfo? previousTraceInfo,

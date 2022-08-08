@@ -8,7 +8,6 @@ namespace Envelope;
 
 public interface IApplicationContext
 {
-	string SourceSystemName { get; }
 	ITraceInfo TraceInfo { get; }
 	IApplicationResources ApplicationResources { get; }
 	IRequestMetadata? RequestMetadata { get; }

@@ -8,7 +8,6 @@ namespace Envelope;
 
 public class ApplicationContext : IApplicationContext
 {
-	public string SourceSystemName { get; }
 	public ITraceInfo TraceInfo { get; private set; }
 	public IApplicationResources ApplicationResources { get; }
 	public IRequestMetadata? RequestMetadata { get; }
@@ -17,7 +16,6 @@ public class ApplicationContext : IApplicationContext
 	public ApplicationContext(ITraceInfo traceInfo, IApplicationResources applicationResources, IRequestMetadata? requestMetadata)
 	{
 		TraceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
-		SourceSystemName = traceInfo.SourceSystemName;
 		ApplicationResources = applicationResources ?? throw new ArgumentNullException(nameof(applicationResources));
 		RequestMetadata = requestMetadata;
 		Items = new Dictionary<string, object?>();
@@ -31,7 +29,7 @@ public class ApplicationContext : IApplicationContext
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(TraceInfo.SourceSystemName, traceFrame, TraceInfo)
 				.Build();
 		}
 
@@ -45,7 +43,7 @@ public class ApplicationContext : IApplicationContext
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(TraceInfo.SourceSystemName, traceFrame, TraceInfo)
 				.IdUser(idUser)
 				.Build();
 		}
@@ -60,7 +58,7 @@ public class ApplicationContext : IApplicationContext
 
 		lock (_lockTrace)
 		{
-			TraceInfo = new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+			TraceInfo = new TraceInfoBuilder(TraceInfo.SourceSystemName, traceFrame, TraceInfo)
 				.Principal(principal)
 				.Build();
 		}
@@ -81,6 +79,6 @@ public class ApplicationContext : IApplicationContext
 				.Build());
 
 	public ITraceInfo Next(ITraceFrame traceFrame)
-		=> new TraceInfoBuilder(SourceSystemName, traceFrame, TraceInfo)
+		=> new TraceInfoBuilder(TraceInfo.SourceSystemName, traceFrame, TraceInfo)
 			.Build();
 }
