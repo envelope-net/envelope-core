@@ -7,5 +7,5 @@ public interface ITransactionBehaviorObserverConnector
 	/// <summary>
 	/// Connect an transaction observer
 	/// </summary>
-	IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver manager);
+	IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver observer);
 }

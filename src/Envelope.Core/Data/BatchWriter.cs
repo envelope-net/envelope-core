@@ -186,7 +186,7 @@ public class BatchWriter<T> : IBatchWriter<T>, IDisposable
 		}
 	}
 
-	private bool disposed;
+	private bool _disposed;
 	/// <summary>
 	/// Free resources held by the sink.
 	/// </summary>
@@ -194,15 +194,13 @@ public class BatchWriter<T> : IBatchWriter<T>, IDisposable
 	/// the object is being disposed from the finalizer.</param>
 	protected virtual void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			if (disposing)
-			{
-				CloseAndFlush();
-			}
+		if (_disposed)
+			return;
 
-			disposed = true;
-		}
+		_disposed = true;
+
+		if (disposing)
+			CloseAndFlush();
 	}
 
 	/// <summary>

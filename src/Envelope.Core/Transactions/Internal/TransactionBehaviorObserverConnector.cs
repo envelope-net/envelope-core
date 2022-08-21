@@ -6,15 +6,15 @@ namespace Envelope.Transactions.Internal;
 internal class TransactionBehaviorObserverConnector : ObservableConnector<ITransactionBehaviorObserver>, ITransactionBehaviorObserverConnector
 {
 	/// <inheritdoc/>
-	public IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver manager)
+	public IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver observer)
 	{
 		try
 		{
-			return Connect(manager);
+			return Connect(observer);
 		}
 		catch (Exception ex)
 		{
-			throw new TransactionObserverConnectionException("Transaction is in progress. It is not possible to add any more managers.", ex);
+			throw new TransactionObserverConnectionException("Transaction is in progress. It is not possible to add any more observers.", ex);
 		}
 	}
 }

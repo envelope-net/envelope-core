@@ -1,16 +1,19 @@
 ﻿namespace Envelope.Transactions;
 
-public interface ITransactionObserver : Observables.IObserver
+public interface ITransactionObserver : Observables.IObserver, IDisposable
+#if NET6_0_OR_GREATER
+	, IAsyncDisposable
+#endif
 {
-	void PreCommit(ITransactionManager transactionManager);
-	void PostCommit(ITransactionManager transactionManager);
-	void PreRollback(ITransactionManager transactionManager, Exception? exception);
-	void PostRollback(ITransactionManager transactionManager);
-	void RollbackFault(ITransactionManager transactionManager, Exception exception);
+	void PreCommit(ITransactionCoordinator transactionCoordinator);
+	void PostCommit(ITransactionCoordinator transactionCoordinator);
+	void PreRollback(ITransactionCoordinator transactionCoordinator, Exception? exception);
+	void PostRollback(ITransactionCoordinator transactionCoordinator);
+	void RollbackFault(ITransactionCoordinator transactionCoordinator, Exception exception);
 
-	Task PreCommitAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
-	Task PostCommitAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
-	Task PreRollbackAsync(ITransactionManager transactionManager, Exception? exception, CancellationToken cancellationToken);
-	Task PostRollbackAsync(ITransactionManager transactionManager, CancellationToken cancellationToken);
-	Task RollbackFaultAsync(ITransactionManager transactionManager, Exception exception, CancellationToken cancellationToken);
+	Task PreCommitAsync(ITransactionCoordinator transactionCoordinator, CancellationToken cancellationToken);
+	Task PostCommitAsync(ITransactionCoordinator transactionCoordinator, CancellationToken cancellationToken);
+	Task PreRollbackAsync(ITransactionCoordinator transactionCoordinator, Exception? exception, CancellationToken cancellationToken);
+	Task PostRollbackAsync(ITransactionCoordinator transactionCoordinator, CancellationToken cancellationToken);
+	Task RollbackFaultAsync(ITransactionCoordinator transactionCoordinator, Exception exception, CancellationToken cancellationToken);
 }

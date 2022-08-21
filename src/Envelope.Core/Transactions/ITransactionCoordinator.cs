@@ -2,7 +2,7 @@
 
 namespace Envelope.Transactions;
 
-public interface ITransactionManager : ITransactionBehaviorObserverConnector, ITransactionObserverConnector, IDisposable
+public interface ITransactionCoordinator : ITransactionBehaviorObserverConnector, ITransactionObserverConnector, Observables.IObservable, IDisposable
 #if NET6_0_OR_GREATER
 	, IAsyncDisposable
 #endif
@@ -11,6 +11,10 @@ public interface ITransactionManager : ITransactionBehaviorObserverConnector, IT
 	/// Gets the transaction context identifier.
 	/// </summary>
 	Guid TransactionId { get; }
+
+	ITransactionController TransactionController { get; }
+
+	IServiceProvider ServiceProvider { get; }
 
 	/// <summary>
 	/// Custom transaction items.
@@ -48,6 +52,4 @@ public interface ITransactionManager : ITransactionBehaviorObserverConnector, IT
 	/// Only if the rollback is called for the first time.
 	/// </summary>
 	Task<bool> TryRollbackAsync(Exception? exception = null, CancellationToken cancellationToken = default);
-
-	ITransactionContext CreateTransactionContext();
 }

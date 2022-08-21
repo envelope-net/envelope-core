@@ -168,6 +168,163 @@ public class DelegateFactory : IDelegateFactory
 		return compiled;
 	}
 
+	public static Func<T?, TType?> CreateGet<T, TType>(MemberInfo memberInfo)
+	{
+		if (memberInfo == null)
+			throw new ArgumentNullException(nameof(memberInfo));
+
+		if (memberInfo is PropertyInfo propertyInfo)
+		{
+			if (propertyInfo.PropertyType.IsByRef)
+				throw new InvalidOperationException($"Could not create getter for {propertyInfo.Name}. ByRef return values are not supported.");
+
+			return CreateGet<T, TType>(propertyInfo);
+		}
+
+		if (memberInfo is FieldInfo fieldInfo)
+			return CreateGet<T, TType>(fieldInfo);
+
+		throw new Exception($"Could not create getter for {memberInfo.Name}");
+	}
+
+	public static Func<T?, TType?> CreateGet<T, TType>(PropertyInfo propertyInfo)
+	{
+		if (propertyInfo == null)
+			throw new ArgumentNullException(nameof(propertyInfo));
+
+		Type instanceType = typeof(T);
+		Type resultType = typeof(TType);
+
+		ParameterExpression parameterExpression = Expression.Parameter(instanceType, "instance");
+		Expression resultExpression;
+
+		MethodInfo? getMethod = propertyInfo.GetGetMethod(true);
+		if (getMethod == null)
+			throw new ArgumentException("Property does not have a getter.");
+
+		if (getMethod.IsStatic)
+		{
+			resultExpression = Expression.MakeMemberAccess(null, propertyInfo);
+		}
+		else
+		{
+			Expression readParameter = EnsureCastExpression(parameterExpression, propertyInfo.DeclaringType!);
+			resultExpression = Expression.MakeMemberAccess(readParameter, propertyInfo);
+		}
+
+		resultExpression = EnsureCastExpression(resultExpression, resultType);
+
+		LambdaExpression lambdaExpression = Expression.Lambda(typeof(Func<T, TType>), resultExpression, parameterExpression);
+
+		var compiled = (Func<T?, TType?>)lambdaExpression.Compile();
+		return compiled;
+	}
+
+	public static Func<T?, TType?> CreateGet<T, TType>(FieldInfo fieldInfo)
+	{
+		if (fieldInfo == null)
+			throw new ArgumentNullException(nameof(fieldInfo));
+
+		ParameterExpression sourceParameter = Expression.Parameter(typeof(T), "source");
+
+		Expression fieldExpression;
+		if (fieldInfo.IsStatic)
+		{
+			fieldExpression = Expression.Field(null, fieldInfo);
+		}
+		else
+		{
+			Expression sourceExpression = EnsureCastExpression(sourceParameter, fieldInfo.DeclaringType!);
+			fieldExpression = Expression.Field(sourceExpression, fieldInfo);
+		}
+
+		fieldExpression = EnsureCastExpression(fieldExpression, typeof(TType));
+
+		var compiled = Expression.Lambda<Func<T?, TType?>>(fieldExpression, sourceParameter).Compile();
+		return compiled;
+	}
+
+	public static Action<T?, TType?> CreateSet<T, TType>(MemberInfo memberInfo)
+	{
+		if (memberInfo == null)
+			throw new ArgumentNullException(nameof(memberInfo));
+
+		if (memberInfo is PropertyInfo propertyInfo)
+			return CreateSet<T, TType>(propertyInfo);
+
+		if (memberInfo is FieldInfo fieldInfo)
+			return CreateSet<T, TType>(fieldInfo);
+
+		throw new Exception($"Could not create setter for {memberInfo.Name}");
+	}
+
+	public static Action<T?, TType?> CreateSet<T, TType>(PropertyInfo propertyInfo)
+	{
+		if (propertyInfo == null)
+			throw new ArgumentNullException(nameof(propertyInfo));
+
+		if (propertyInfo.DeclaringType?.IsValueType ?? false)
+			return (o, v) => propertyInfo.SetValue(o, v, null);
+
+		Type instanceType = typeof(T);
+		Type valueType = typeof(TType);
+
+		ParameterExpression instanceParameter = Expression.Parameter(instanceType, "instance");
+
+		ParameterExpression valueParameter = Expression.Parameter(valueType, "value");
+		Expression readValueParameter = EnsureCastExpression(valueParameter, propertyInfo.PropertyType);
+
+		MethodInfo? setMethod = propertyInfo.GetSetMethod(true);
+		if (setMethod == null)
+			throw new ArgumentException("Property does not have a setter.");
+
+		Expression setExpression;
+		if (setMethod.IsStatic)
+		{
+			setExpression = Expression.Call(setMethod, readValueParameter);
+		}
+		else
+		{
+			Expression readInstanceParameter = EnsureCastExpression(instanceParameter, propertyInfo.DeclaringType!);
+			setExpression = Expression.Call(readInstanceParameter, setMethod, readValueParameter);
+		}
+
+		LambdaExpression lambdaExpression = Expression.Lambda(typeof(Action<T, TType?>), setExpression, instanceParameter, valueParameter);
+
+		var compiled = (Action<T?, TType?>)lambdaExpression.Compile();
+		return compiled;
+	}
+
+	public static Action<T?, TType?> CreateSet<T, TType>(FieldInfo fieldInfo)
+	{
+		if (fieldInfo == null)
+			throw new ArgumentNullException(nameof(fieldInfo));
+
+		if ((fieldInfo.DeclaringType?.IsValueType ?? false) || fieldInfo.IsInitOnly)
+			return (o, v) => fieldInfo.SetValue(o, v);
+
+		ParameterExpression sourceParameterExpression = Expression.Parameter(typeof(T), "source");
+		ParameterExpression valueParameterExpression = Expression.Parameter(typeof(TType), "value");
+
+		Expression fieldExpression;
+		if (fieldInfo.IsStatic)
+		{
+			fieldExpression = Expression.Field(null, fieldInfo);
+		}
+		else
+		{
+			Expression sourceExpression = EnsureCastExpression(sourceParameterExpression, fieldInfo.DeclaringType!);
+			fieldExpression = Expression.Field(sourceExpression, fieldInfo);
+		}
+
+		Expression valueExpression = EnsureCastExpression(valueParameterExpression, fieldExpression.Type);
+		BinaryExpression assignExpression = Expression.Assign(fieldExpression, valueExpression);
+		LambdaExpression lambdaExpression = Expression.Lambda(typeof(Action<T, TType>), assignExpression, sourceParameterExpression, valueParameterExpression);
+
+		var compiled = (Action<T?, TType?>)lambdaExpression.Compile();
+		return compiled;
+	}
+
 	public Func<T> CreateDefaultConstructor<T>(Type type)
 	{
 		if (type == null)
@@ -219,6 +376,24 @@ public class DelegateFactory : IDelegateFactory
 		LambdaExpression lambdaExpression = Expression.Lambda(typeof(MethodCall<T, object>), callExpression, targetParameterExpression, argsParameterExpression);
 
 		var compiled = (MethodCall<T?, object?>)lambdaExpression.Compile();
+		return compiled;
+	}
+
+	public static MethodCall<T?, TReturn?> CreateMethodCall<T, TReturn>(MethodBase method)
+	{
+		if (method == null)
+			throw new ArgumentNullException(nameof(method));
+
+		Type type = typeof(TReturn);
+
+		ParameterExpression targetParameterExpression = Expression.Parameter(type, "target");
+		ParameterExpression argsParameterExpression = Expression.Parameter(typeof(object[]), "args");
+
+		Expression callExpression = BuildMethodCall(method, type, targetParameterExpression, argsParameterExpression);
+
+		LambdaExpression lambdaExpression = Expression.Lambda(typeof(MethodCall<T, TReturn>), callExpression, targetParameterExpression, argsParameterExpression);
+
+		var compiled = (MethodCall<T?, TReturn?>)lambdaExpression.Compile();
 		return compiled;
 	}
 

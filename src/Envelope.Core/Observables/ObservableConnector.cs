@@ -175,6 +175,15 @@ public class ObservableConnector<T>
 		}
 	}
 
+	public void DisconnectAll()
+	{
+		lock (_observers)
+		{
+			_observers.Clear();
+			_connected = _observers.Values.ToArray();
+		}
+	}
+
 
 	private class Handle : IConnectHandle
 	{

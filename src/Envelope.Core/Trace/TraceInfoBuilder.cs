@@ -154,6 +154,17 @@ public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
 	{
 	}
 
+	public static void ReplacePrincipal(ITraceInfo traceInfo, EnvelopePrincipal principal)
+	{
+		if (traceInfo == null)
+			throw new ArgumentNullException(nameof(traceInfo));
+
+		if (traceInfo is not TraceInfo ti)
+			throw new InvalidOperationException($"Invalid {nameof(traceInfo)} type");
+
+		ti.Principal = principal;
+	}
+
 	public static implicit operator TraceInfo?(TraceInfoBuilder builder)
 	{
 		if (builder == null)
