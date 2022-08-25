@@ -7,5 +7,5 @@ public interface ITransactionCache : IDisposable
 {
 	ITransactionCoordinator TransactionCoordinator { get; }
 
-	internal void SetTransactionCoordinator(ITransactionCoordinator transactionCoordinator);
+	void SetTransactionCoordinatorInternal(ITransactionCoordinator transactionCoordinator);
 }

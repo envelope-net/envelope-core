@@ -25,7 +25,7 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 
 	public ITransactionCoordinator TransactionCoordinator { get; private set; }
 
-	void ITransactionCache.SetTransactionCoordinator(ITransactionCoordinator transactionCoordinator)
+	void ITransactionCache.SetTransactionCoordinatorInternal(ITransactionCoordinator transactionCoordinator)
 	{
 		TransactionCoordinator = transactionCoordinator ?? throw new ArgumentNullException(nameof(transactionCoordinator));
 	}

@@ -64,6 +64,12 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 		_builder = (TBuilder)this;
 	}
 
+	protected TraceInfoBuilderBase(TraceInfo traceInfo)
+	{
+		_traceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
+		_builder = (TBuilder)this;
+	}
+
 	public ITraceInfo Build()
 		=> _traceInfo;
 
@@ -136,6 +142,11 @@ public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
 	//{
 	//}
 
+	private TraceInfoBuilder(TraceInfo traceInfo)
+		: base(traceInfo)
+	{
+	}
+
 	public TraceInfoBuilder(IServiceProvider serviceProvider, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
 		: this((serviceProvider.GetService(TraceInfo.ApplicationContextType) as IApplicationContext)!, currentTraceFrame, previousTraceInfo)
 	{
@@ -162,7 +173,8 @@ public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
 		if (traceInfo is not TraceInfo ti)
 			throw new InvalidOperationException($"Invalid {nameof(traceInfo)} type");
 
-		ti.Principal = principal;
+		var traceInfoBuilder = new TraceInfoBuilder(ti);
+		traceInfoBuilder.Principal(principal, true);
 	}
 
 	public static implicit operator TraceInfo?(TraceInfoBuilder builder)

@@ -64,7 +64,7 @@ internal class TransactionController : ITransactionController
 		if (cache is not TTransactionCache transactionCache)
 			throw new InvalidOperationException($"Invalid {typeof(ITransactionCache).FullName} type. Returned type = {cache.GetType().FullName} for Name = {name}");
 
-		transactionCache.SetTransactionCoordinator(TransactionCoordinator);
+		transactionCache.SetTransactionCoordinatorInternal(TransactionCoordinator);
 	}
 
 	internal void AddTransactionCache<TTransactionCache>(TTransactionCache transactionCache)
@@ -84,7 +84,7 @@ internal class TransactionController : ITransactionController
 		if (cache is not TTransactionCache transCache)
 			throw new InvalidOperationException($"Invalid {typeof(ITransactionCache).FullName} type. Returned type = {cache.GetType().FullName} for Name = {name}");
 
-		transCache.SetTransactionCoordinator(TransactionCoordinator);
+		transCache.SetTransactionCoordinatorInternal(TransactionCoordinator);
 	}
 
 	public TTransactionCache GetTransactionCache<TTransactionCache>()

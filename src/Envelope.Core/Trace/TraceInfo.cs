@@ -14,9 +14,21 @@ public class TraceInfo : ITraceInfo
 
 	public ITraceFrame TraceFrame { get; internal set; }
 
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+	[Newtonsoft.Json.JsonIgnore]
+#elif NET6_0_OR_GREATER
+	[System.Text.Json.Serialization.JsonIgnore]
+#endif
 	public EnvelopePrincipal? Principal { get; internal set; }
+	public bool ShouldSerializePrincipal() => false;
 
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+	[Newtonsoft.Json.JsonIgnore]
+#elif NET6_0_OR_GREATER
+	[System.Text.Json.Serialization.JsonIgnore]
+#endif
 	public EnvelopeIdentity? User => Principal?.IdentityBase;
+	public bool ShouldSerializeUser() => false;
 
 	public Guid? IdUser { get; internal set; }
 
