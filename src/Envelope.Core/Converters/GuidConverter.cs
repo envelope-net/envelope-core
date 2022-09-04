@@ -343,6 +343,49 @@ public static class GuidConverter
 		return new Guid(newGuid);
 	}
 
+	public static Guid ToGuid(object value)
+	{
+		if (value == null)
+			throw new ArgumentNullException(nameof(value));
+
+		if (value is sbyte sbyteValue)
+			return ToGuid(sbyteValue);
+		else if (value is byte byteValue)
+			return ToGuid(byteValue);
+		else if (value is short shortValue)
+			return ToGuid(shortValue);
+		else if (value is ushort ushortValue)
+			return ToGuid(ushortValue);
+		else if (value is int intValue)
+			return ToGuid(intValue);
+		else if (value is uint uintValue)
+			return ToGuid(uintValue);
+		else if (value is long longValue)
+			return ToGuid(longValue);
+		else if (value is ulong ulongValue)
+			return ToGuid(ulongValue);
+		else if (value is float floatValue)
+			return ToGuid(floatValue);
+		else if (value is double doubleValue)
+			return ToGuid(doubleValue);
+		else if (value is decimal decimalValue)
+			return ToGuid(decimalValue);
+		else if (value is char charValue)
+			return ToGuid(charValue);
+		else if (value is bool boolValue)
+			return ToGuid(boolValue);
+		else if (value is DateTime dateTimeValue)
+			return ToGuid(dateTimeValue);
+		else if (value is string stringValue)
+			return ToGuid(stringValue);
+		else if (value.GetType().IsEnum)
+			return ToGuid((int)value);
+		else if (value is Guid guidValue)
+			return ToGuid(guidValue);
+
+		throw new InvalidOperationException($"Unable to convert {nameof(value)} to Guid. Invalid {nameof(value)} type {value.GetType().FullName}");
+	}
+
 	// Converts a GUID (expressed as a byte array) to/from network order (MSB-first).
 	private static void SwapByteOrder(byte[] guid)
 	{
@@ -522,6 +565,49 @@ public static class GuidConverter
 
 		var result = new Guid(bytes);
 		return result;
+	}
+
+	public static Guid WriteToGuid(object value, Guid guid)
+	{
+		if (value == null)
+			throw new ArgumentNullException(nameof(value));
+
+		if (value is sbyte sbyteValue)
+			return WriteToGuid(sbyteValue, guid);
+		else if (value is byte byteValue)
+			return WriteToGuid(byteValue, guid);
+		else if (value is short shortValue)
+			return WriteToGuid(shortValue, guid);
+		else if (value is ushort ushortValue)
+			return WriteToGuid(ushortValue, guid);
+		else if (value is int intValue)
+			return WriteToGuid(intValue, guid);
+		else if (value is uint uintValue)
+			return WriteToGuid(uintValue, guid);
+		else if (value is long longValue)
+			return WriteToGuid(longValue, guid);
+		else if (value is ulong ulongValue)
+			return WriteToGuid(ulongValue, guid);
+		else if (value is float floatValue)
+			return WriteToGuid(floatValue, guid);
+		else if (value is double doubleValue)
+			return WriteToGuid(doubleValue, guid);
+		else if (value is decimal decimalValue)
+			return WriteToGuid(decimalValue, guid);
+		else if (value is char charValue)
+			return WriteToGuid(charValue, guid);
+		else if (value is bool boolValue)
+			return WriteToGuid(boolValue, guid);
+		else if (value is DateTime dateTimeValue)
+			return WriteToGuid(dateTimeValue, guid);
+		else if (value is string stringValue)
+			return WriteToGuid(stringValue, guid);
+		else if (value.GetType().IsEnum)
+			return WriteToGuid((int)value, guid);
+		else if (value is Guid guidValue)
+			return WriteToGuid(guidValue, guid);
+
+		throw new InvalidOperationException($"Invalid {nameof(value)} type. Unable to convert to Guid");
 	}
 
 	public static Guid TrimGuidToType<T>(Guid value)

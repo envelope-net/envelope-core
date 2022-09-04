@@ -57,6 +57,10 @@ public static class StringExtensions
 	public static string RemoveAccents(this string text)
 		=> StringHelper.RemoveAccents(text);
 
+	[return: NotNullIfNotNull("text")]
+	public static MemoryStream? ToStream(this string text, Encoding? encoding = null)
+		=> StringHelper.ToStream(text, encoding);
+
 	public static bool IsSyntacticSimilar(this string s, string text, double threshold = 0.7, bool ignoreCase = true, bool ignoreAccent = true, CultureInfo? ignoreCaseCultureInfo = null, int searchRange = 1)
 	{
 		return threshold <= GetSyntacticMatchingScore(s, text, ignoreCase, ignoreAccent, ignoreCaseCultureInfo, searchRange);
