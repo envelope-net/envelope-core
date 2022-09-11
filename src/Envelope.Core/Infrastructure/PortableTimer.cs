@@ -97,6 +97,8 @@ public class PortableTimer : IDisposable
 		if (_disposed)
 			return;
 
+		_disposed = true;
+
 		if (disposing)
 		{
 			_cancel.Cancel();
@@ -114,11 +116,8 @@ public class PortableTimer : IDisposable
 				}
 
 				_timer.Dispose();
-				_disposed = true;
 			}
 		}
-
-		_disposed = true;
 	}
 
 	public void Dispose()

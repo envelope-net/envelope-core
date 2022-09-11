@@ -842,6 +842,21 @@ public static class StringHelper
 #endif
 	}
 
+	[return: NotNullIfNotNull("text")]
+	public static MemoryStream? ToStream(string text, Encoding? encoding = null)
+	{
+		if (text == null)
+			return null;
+
+		if (encoding == null)
+			encoding = Encoding.UTF8;
+
+		var bytes = encoding.GetBytes(text);
+		var ms = new MemoryStream(bytes);
+		ms.Seek(0, SeekOrigin.Begin);
+		return ms;
+	}
+
 	/// <summary>
 	/// ReduceWhitespaces
 	/// </summary>

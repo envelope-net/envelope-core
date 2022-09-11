@@ -7,7 +7,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 {
 	protected TimeSpan StartDelay { get; set; }
 	protected readonly Timer _timer;
-	private bool disposed;
+	private bool _disposed;
 
 	public TimeSpan TimerInterval { get; set; }
 	public bool IsInProcess { get; private set; }
@@ -29,7 +29,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 
 	public virtual bool Start()
 	{
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		lock (_timerLock)
@@ -38,7 +38,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 				return false;
 				//throw new InvalidOperationException($"{GetType().Name} already started.");
 
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			//Start timer
@@ -50,7 +50,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 
 	public virtual void Stop()
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		lock (_timerLock)
@@ -58,7 +58,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 			if (!IsActive)
 				return;
 
-			if (disposed)
+			if (_disposed)
 				return;
 
 			//Stop timer
@@ -69,12 +69,12 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 
 	public virtual void Restart()
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		lock (_timerLock)
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			_timer.Change(StartDelay, Timeout.InfiniteTimeSpan);
@@ -85,12 +85,12 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 	private readonly object _ticksLock = new();
 	private void TimerCallback(object? state)
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		lock (_ticksLock)
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			if (!IsActive)
@@ -125,12 +125,12 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 	protected abstract bool OnError(object? state, Exception ex);
 	protected virtual bool PauseTimer()
 	{
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		lock(_timerLock)
 		{
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			return _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -142,7 +142,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 		if (!IsActive)
 			return false;
 
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		lock (_timerLock)
@@ -150,7 +150,7 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 			if (!IsActive)
 				return false;
 
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			return _timer.Change(TimerInterval, Timeout.InfiniteTimeSpan);
@@ -161,6 +161,11 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 	/// <inheritdoc/>
 	public async ValueTask DisposeAsync()
 	{
+		if (_disposed)
+			return;
+
+		_disposed = true;
+
 		await DisposeAsyncCoreAsync().ConfigureAwait(false);
 
 		Dispose(disposing: false);
@@ -173,13 +178,13 @@ public abstract class BaseSequentialSyncTimer : IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			if (disposing)
-				_timer.Dispose();
+		if (_disposed)
+			return;
 
-			disposed = true;
-		}
+		_disposed = true;
+
+		if (disposing)
+			_timer.Dispose();
 	}
 
 	public void Dispose()

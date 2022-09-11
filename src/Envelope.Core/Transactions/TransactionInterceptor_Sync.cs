@@ -4,52 +4,16 @@ namespace Envelope.Transactions;
 
 public partial class TransactionInterceptor
 {
-	public virtual void Execute(
-		bool isReadOnly,
-		ITraceInfo traceInfo,
-		Action<ITraceInfo, ITransactionContext> action,
-		string? unhandledExceptionDetail,
-		Action<ITraceInfo, Exception?, string?> onError,
-		Action? @finally,
-		bool throwOnError = true)
-		=> Execute(
-				isReadOnly,
-				traceInfo,
-				CreateTransactionContext(),
-				action,
-				unhandledExceptionDetail,
-				onError,
-				@finally,
-				throwOnError,
-				true);
-
-	public virtual T Execute<T>(
-		bool isReadOnly,
-		ITraceInfo traceInfo,
-		Func<ITraceInfo, ITransactionContext, T> action,
-		string? unhandledExceptionDetail,
-		Action<ITraceInfo, Exception?, string?> onError,
-		Action? @finally)
-		=> Execute(
-				isReadOnly,
-				traceInfo,
-				CreateTransactionContext(),
-				action,
-				unhandledExceptionDetail,
-				onError,
-				@finally,
-				true);
-
 	public static void Execute(
 		bool isReadOnly,
 		ITraceInfo traceInfo,
-		ITransactionContext transactionContext,
-		Action<ITraceInfo, ITransactionContext> action,
+		ITransactionController transactionController,
+		Action<ITraceInfo, ITransactionController> action,
 		string? unhandledExceptionDetail,
 		Action<ITraceInfo, Exception?, string?> onError,
 		Action? @finally,
 		bool throwOnError = true,
-		bool disposeTransactionContext = true)
+		bool disposeTransactionController = true)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
@@ -57,23 +21,23 @@ public partial class TransactionInterceptor
 		if (onError == null)
 			throw new ArgumentNullException(nameof(onError));
 
-		if (transactionContext == null)
-			throw new ArgumentNullException(nameof(transactionContext));
+		if (transactionController == null)
+			throw new ArgumentNullException(nameof(transactionController));
 
 		traceInfo = TraceInfo.Create(traceInfo);
 
 		try
 		{
-			action(traceInfo, transactionContext);
+			action(traceInfo, transactionController);
 
-			if (isReadOnly && transactionContext.TransactionResult != TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionContext.TransactionResult)} == {transactionContext.TransactionResult}");
+			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
 
-			if (!isReadOnly && transactionContext.TransactionResult == TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionContext.TransactionResult)} == {TransactionResult.None}");
+			if (!isReadOnly && transactionController.TransactionResult == TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionController.TransactionResult)} == {TransactionResult.None}");
 
-			if (transactionContext.TransactionResult == TransactionResult.Commit)
-				transactionContext.TransactionManager.Commit();
+			if (transactionController.TransactionResult == TransactionResult.Commit)
+				transactionController.TransactionCoordinator.Commit();
 		}
 		catch (Exception ex)
 		{
@@ -83,15 +47,15 @@ public partial class TransactionInterceptor
 			}
 			catch { }
 
-			if (isReadOnly && transactionContext.TransactionResult != TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionContext.TransactionResult)} == {transactionContext.TransactionResult}");
+			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
 
-			if (!isReadOnly && transactionContext.TransactionResult == TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionContext.TransactionResult)} == {TransactionResult.None}");
+			if (!isReadOnly && transactionController.TransactionResult == TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionController.TransactionResult)} == {TransactionResult.None}");
 
 			try
 			{
-				transactionContext.TransactionManager.TryRollback(ex);
+				transactionController.TransactionCoordinator.TryRollback(ex);
 			}
 			catch (Exception rollbackEx)
 			{
@@ -107,11 +71,11 @@ public partial class TransactionInterceptor
 		}
 		finally
 		{
-			if (transactionContext.TransactionResult == TransactionResult.Rollback)
+			if (transactionController.TransactionResult == TransactionResult.Rollback)
 			{
 				try
 				{
-					transactionContext.TransactionManager.TryRollback(null);
+					transactionController.TransactionCoordinator.TryRollback(null);
 				}
 				catch (Exception rollbackEx)
 				{
@@ -120,8 +84,8 @@ public partial class TransactionInterceptor
 						onError(
 							traceInfo,
 							rollbackEx,
-							!string.IsNullOrWhiteSpace(transactionContext.RollbackErrorInfo)
-								? $"{(!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? $"{unhandledExceptionDetail} " : "")}{transactionContext.RollbackErrorInfo} {DefaultRollbackErrorInfo}"
+							!string.IsNullOrWhiteSpace(transactionController.RollbackErrorInfo)
+								? $"{(!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? $"{unhandledExceptionDetail} " : "")}{transactionController.RollbackErrorInfo} {DefaultRollbackErrorInfo}"
 								: (!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? unhandledExceptionDetail : DefaultRollbackErrorInfo));
 					}
 					catch { }
@@ -144,14 +108,14 @@ public partial class TransactionInterceptor
 				}
 			}
 
-			if (disposeTransactionContext)
+			if (disposeTransactionController)
 			{
 				try
 				{
 #if NETSTANDARD2_0 || NETSTANDARD2_1
-					transactionContext.Dispose();
+					transactionController.Dispose();
 #else
-					transactionContext.Dispose();
+					transactionController.Dispose();
 #endif
 				}
 				catch (Exception disposeEx)
@@ -169,12 +133,12 @@ public partial class TransactionInterceptor
 	public static T Execute<T>(
 		bool isReadOnly,
 		ITraceInfo traceInfo,
-		ITransactionContext transactionContext,
-		Func<ITraceInfo, ITransactionContext, T> action,
+		ITransactionController transactionController,
+		Func<ITraceInfo, ITransactionController, T> action,
 		string? unhandledExceptionDetail,
 		Action<ITraceInfo, Exception?, string?> onError,
 		Action? @finally,
-		bool disposeTransactionContext = true)
+		bool disposeTransactionController = true)
 	{
 		if (action == null)
 			throw new ArgumentNullException(nameof(action));
@@ -182,24 +146,24 @@ public partial class TransactionInterceptor
 		if (onError == null)
 			throw new ArgumentNullException(nameof(onError));
 
-		if (transactionContext == null)
-			throw new ArgumentNullException(nameof(transactionContext));
+		if (transactionController == null)
+			throw new ArgumentNullException(nameof(transactionController));
 
 		traceInfo = TraceInfo.Create(traceInfo);
 		T? result;
 
 		try
 		{
-			result = action(traceInfo, transactionContext);
+			result = action(traceInfo, transactionController);
 
-			if (isReadOnly && transactionContext.TransactionResult != TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionContext.TransactionResult)} == {transactionContext.TransactionResult}");
+			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
 
-			//if (!isReadOnly && transactionContext.TransactionResult == TransactionResult.None)
-			//	throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionContext.TransactionResult)} == {TransactionResult.None}");
+			//if (!isReadOnly && transactionController.TransactionResult == TransactionResult.None)
+			//	throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionController.TransactionResult)} == {TransactionResult.None}");
 
-			if (transactionContext.TransactionResult == TransactionResult.Commit)
-				transactionContext.TransactionManager.Commit();
+			if (transactionController.TransactionResult == TransactionResult.Commit)
+				transactionController.TransactionCoordinator.Commit();
 
 				return result;
 		}
@@ -211,15 +175,15 @@ public partial class TransactionInterceptor
 			}
 			catch { }
 
-			if (isReadOnly && transactionContext.TransactionResult != TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionContext.TransactionResult)} == {transactionContext.TransactionResult}");
+			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
 
-			if (!isReadOnly && transactionContext.TransactionResult == TransactionResult.None)
-				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionContext.TransactionResult)} == {TransactionResult.None}");
+			if (!isReadOnly && transactionController.TransactionResult == TransactionResult.None)
+				throw new InvalidOperationException($"{nameof(isReadOnly)} == false | {nameof(transactionController.TransactionResult)} == {TransactionResult.None}");
 
 			try
 			{
-				transactionContext.TransactionManager.TryRollback(ex);
+				transactionController.TransactionCoordinator.TryRollback(ex);
 			}
 			catch (Exception rollbackEx)
 			{
@@ -234,11 +198,11 @@ public partial class TransactionInterceptor
 		}
 		finally
 		{
-			if (transactionContext.TransactionResult == TransactionResult.Rollback)
+			if (transactionController.TransactionResult == TransactionResult.Rollback)
 			{
 				try
 				{
-					transactionContext.TransactionManager.TryRollback(null);
+					transactionController.TransactionCoordinator.TryRollback(null);
 				}
 				catch (Exception rollbackEx)
 				{
@@ -247,8 +211,8 @@ public partial class TransactionInterceptor
 						onError(
 							traceInfo,
 							rollbackEx,
-							!string.IsNullOrWhiteSpace(transactionContext.RollbackErrorInfo)
-								? $"{(!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? $"{unhandledExceptionDetail} " : "")}{transactionContext.RollbackErrorInfo} {DefaultRollbackErrorInfo}"
+							!string.IsNullOrWhiteSpace(transactionController.RollbackErrorInfo)
+								? $"{(!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? $"{unhandledExceptionDetail} " : "")}{transactionController.RollbackErrorInfo} {DefaultRollbackErrorInfo}"
 								: (!string.IsNullOrWhiteSpace(unhandledExceptionDetail) ? unhandledExceptionDetail : DefaultRollbackErrorInfo));
 					}
 					catch { }
@@ -271,14 +235,14 @@ public partial class TransactionInterceptor
 				}
 			}
 
-			if (disposeTransactionContext)
+			if (disposeTransactionController)
 			{
 				try
 				{
 #if NETSTANDARD2_0 || NETSTANDARD2_1
-					transactionContext.Dispose();
+					transactionController.Dispose();
 #else
-					transactionContext.Dispose();
+					transactionController.Dispose();
 #endif
 				}
 				catch (Exception disposeEx)

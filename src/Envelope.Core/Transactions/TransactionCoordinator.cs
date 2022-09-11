@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 
 namespace Envelope.Transactions;
 
-public class TransactionManager : ITransactionManager, ITransactionBehaviorObserverConnector, ITransactionObserverConnector, IDisposable
+public sealed class TransactionCoordinator : ITransactionCoordinator, ITransactionBehaviorObserverConnector, ITransactionObserverConnector, IDisposable
 #if NET6_0_OR_GREATER
 	, IAsyncDisposable
 #endif
@@ -13,6 +13,7 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	private readonly object _lock = new();
 	private readonly AsyncLock _asyncLock = new();
 
+	private readonly TransactionController _transactionController;
 	private readonly TransactionBehaviorObserverConnector _transactionBehaviorObserverConnector;
 	private readonly TransactionObserverConnector _transactionObserverConnector;
 
@@ -22,31 +23,38 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 
 	/// <inheritdoc/>
 	public Guid TransactionId { get; }
+	public ITransactionController TransactionController => _transactionController;
+	public IServiceProvider ServiceProvider { get; }
 
 	/// <inheritdoc/>
 	public ConcurrentDictionary<string, object> Items { get; }
 
-	protected internal TransactionManager()
+	public TransactionCoordinator(IServiceProvider serviceProvider, IEnumerable<ITransactionCacheFactoryStore>? factoryStores)
 	{
 		TransactionId = Guid.NewGuid();
 		Items = new ConcurrentDictionary<string, object>();
 
+		ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+		_transactionController = new TransactionController(this);
 		_transactionBehaviorObserverConnector = new TransactionBehaviorObserverConnector();
 		_transactionObserverConnector = new TransactionObserverConnector();
-	}
 
-	protected internal TransactionManager(
-		Action<ITransactionBehaviorObserverConnector>? configureBehavior,
-		Action<ITransactionObserverConnector>? configure)
-		: this()
-	{
-		configureBehavior?.Invoke(_transactionBehaviorObserverConnector);
-		configure?.Invoke(_transactionObserverConnector);
+		if (factoryStores?.Any() == true)
+		{
+			foreach (var config in factoryStores)
+				foreach (var kvp in config.Factories)
+					_transactionController.AddTransactionCache(kvp.Key, kvp.Value(ServiceProvider));
+		}
+		else
+		{
+			//DEBUG ... potetional bug
+		}
 	}
 
 	/// <inheritdoc/>
-	public IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver manager)
-		=> _transactionBehaviorObserverConnector.ConnectTransactionObserver(manager);
+	public IConnectHandle ConnectTransactionObserver(ITransactionBehaviorObserver observer)
+		=> _transactionBehaviorObserverConnector.ConnectTransactionObserver(observer);
 
 	/// <inheritdoc/>
 	public IConnectHandle ConnectObserver(ITransactionObserver observer)
@@ -56,26 +64,26 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	public bool Commit()
 	{
 		if (_disposed)
-			throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+			throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionCoordinator)}.");
 
 		if (_commitRaised)
-			throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+			throw new InvalidOperationException($"{nameof(TransactionCoordinator)} is already committed. Multiple commit is not allowed.");
 
 		if (_rollbackRaised)
-			throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+			throw new InvalidOperationException($"Cannot commit {nameof(TransactionCoordinator)} that raised rollback.");
 
 		//try
 		//{
 			lock (_lock)
 			{
 				if (_disposed)
-					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionCoordinator)}.");
 
 				if (_commitRaised)
-					throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+					throw new InvalidOperationException($"{nameof(TransactionCoordinator)} is already committed. Multiple commit is not allowed.");
 
 				if (_rollbackRaised)
-					throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+					throw new InvalidOperationException($"Cannot commit {nameof(TransactionCoordinator)} that raised rollback.");
 
 				_transactionBehaviorObserverConnector.Lock();
 				_transactionObserverConnector.Lock();
@@ -101,26 +109,26 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	public async Task<bool> CommitAsync(CancellationToken cancellationToken = default)
 	{
 		if (_disposed)
-			throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+			throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionCoordinator)}.");
 
 		if (_commitRaised)
-			throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+			throw new InvalidOperationException($"{nameof(TransactionCoordinator)} is already committed. Multiple commit is not allowed.");
 
 		if (_rollbackRaised)
-			throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+			throw new InvalidOperationException($"Cannot commit {nameof(TransactionCoordinator)} that raised rollback.");
 
 		//try
 		//{
 			using (await _asyncLock.LockAsync().ConfigureAwait(false))
 			{
 				if (_disposed)
-					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionManager)}.");
+					throw new InvalidOperationException($"Cannot commit disposed {nameof(TransactionCoordinator)}.");
 
 				if (_commitRaised)
-					throw new InvalidOperationException($"{nameof(TransactionManager)} is already committed. Multiple commit is not allowed.");
+					throw new InvalidOperationException($"{nameof(TransactionCoordinator)} is already committed. Multiple commit is not allowed.");
 
 				if (_rollbackRaised)
-					throw new InvalidOperationException($"Cannot commit {nameof(TransactionManager)} that raised rollback.");
+					throw new InvalidOperationException($"Cannot commit {nameof(TransactionCoordinator)} that raised rollback.");
 
 				_transactionBehaviorObserverConnector.Lock();
 				_transactionObserverConnector.Lock();
@@ -146,18 +154,18 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	public bool Rollback(Exception? exception = null)
 	{
 		if (_disposed)
-			throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionManager)}.");
+			throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionCoordinator)}.");
 
 		if (_rollbackRaised)
-			throw new InvalidOperationException($"Cannot rollback {nameof(TransactionManager)} multiple times.");
+			throw new InvalidOperationException($"Cannot rollback {nameof(TransactionCoordinator)} multiple times.");
 
 		lock (_lock)
 		{
 			if (_disposed)
-				throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionManager)}.");
+				throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionCoordinator)}.");
 
 			if (_rollbackRaised)
-				throw new InvalidOperationException($"Cannot rollback {nameof(TransactionManager)} multiple times.");
+				throw new InvalidOperationException($"Cannot rollback {nameof(TransactionCoordinator)} multiple times.");
 
 			_transactionBehaviorObserverConnector.Lock();
 			_transactionObserverConnector.Lock();
@@ -185,18 +193,18 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	public async Task<bool> RollbackAsync(Exception? exception = null, CancellationToken cancellationToken = default)
 	{
 		if (_disposed)
-			throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionManager)}.");
+			throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionCoordinator)}.");
 
 		if (_rollbackRaised)
-			throw new InvalidOperationException($"Cannot rollback {nameof(TransactionManager)} multiple times.");
+			throw new InvalidOperationException($"Cannot rollback {nameof(TransactionCoordinator)} multiple times.");
 
 		using (await _asyncLock.LockAsync().ConfigureAwait(false))
 		{
 			if (_disposed)
-				throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionManager)}.");
+				throw new InvalidOperationException($"Cannot rollback disposed {nameof(TransactionCoordinator)}.");
 
 			if (_rollbackRaised)
-				throw new InvalidOperationException($"Cannot rollback {nameof(TransactionManager)} multiple times.");
+				throw new InvalidOperationException($"Cannot rollback {nameof(TransactionCoordinator)} multiple times.");
 
 			_transactionBehaviorObserverConnector.Lock();
 			_transactionObserverConnector.Lock();
@@ -302,23 +310,42 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 	/// <inheritdoc/>
 	public async ValueTask DisposeAsync()
 	{
+		if (_disposed)
+			return;
+
+		_disposed = true;
+
 		await DisposeAsyncCoreAsync().ConfigureAwait(false);
 
 		Dispose(disposing: false);
 		GC.SuppressFinalize(this);
 	}
 
-	protected virtual ValueTask DisposeAsyncCoreAsync()
-		=> _transactionBehaviorObserverConnector.ForEachAsync(x => x.DisposeAsync());
+	private async ValueTask DisposeAsyncCoreAsync()
+	{
+		await _transactionBehaviorObserverConnector.ForEachAsync(x => x.DisposeAsync());
+		_transactionBehaviorObserverConnector.DisconnectAll();
+		await _transactionObserverConnector.ForEachAsync(x => x.DisposeAsync());
+		_transactionObserverConnector.DisconnectAll();
+		await TransactionController.DisposeAsync();
+	}
 #endif
 
 	/// <inheritdoc/>
-	protected virtual void Dispose(bool disposing)
+	private void Dispose(bool disposing)
 	{
-		if (!_disposed)
+		if (_disposed)
+			return;
+
+		_disposed = true;
+
+		if (disposing)
 		{
 			_transactionBehaviorObserverConnector.ForEach(x => x.Dispose());
-			_disposed = true;
+			_transactionBehaviorObserverConnector.DisconnectAll();
+			_transactionObserverConnector.ForEach(x => x.Dispose());
+			_transactionObserverConnector.DisconnectAll();
+			TransactionController.Dispose();
 		}
 	}
 
@@ -328,7 +355,4 @@ public class TransactionManager : ITransactionManager, ITransactionBehaviorObser
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
-
-	public virtual ITransactionContext CreateTransactionContext()
-		=> new TransactionContext(this);
 }

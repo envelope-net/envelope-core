@@ -1,4 +1,5 @@
 ﻿using Envelope.Identity;
+using Envelope.Infrastructure;
 
 namespace Envelope.Trace.Dto;
 
@@ -38,7 +39,7 @@ public class TraceInfoDto
 		CorrelationId = traceInfo.CorrelationId;
 	}
 
-	public TraceInfo ToTraceInfo()
+	public TraceInfo ToTraceInfo(ITraceInfo? actualizeByTraceInfo)
 	{
 		var traceInfo = new TraceInfo()
 		{
@@ -50,6 +51,17 @@ public class TraceInfoDto
 			ExternalCorrelationId = ExternalCorrelationId,
 			CorrelationId = CorrelationId,
 		};
+
+		if (actualizeByTraceInfo != null)
+		{
+			traceInfo.RuntimeUniqueKey = actualizeByTraceInfo.RuntimeUniqueKey;
+			traceInfo.SourceSystemName = actualizeByTraceInfo.SourceSystemName;
+			//traceInfo.TraceFrame = 
+			traceInfo.Principal = actualizeByTraceInfo.Principal;
+			traceInfo.IdUser = actualizeByTraceInfo.IdUser;
+			traceInfo.ExternalCorrelationId = actualizeByTraceInfo.ExternalCorrelationId;
+			traceInfo.CorrelationId = actualizeByTraceInfo.CorrelationId;
+		}
 
 		return traceInfo;
 	}

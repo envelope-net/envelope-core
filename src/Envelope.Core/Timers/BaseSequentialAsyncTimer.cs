@@ -8,7 +8,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 #endif
 {
 	protected readonly Timer _timer;
-	private bool disposed;
+	private bool _disposed;
 
 	public TimeSpan StartDelay { get; set; }
 	public TimeSpan TimerInterval { get; set; }
@@ -30,7 +30,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 	private readonly AsyncLock _timerLock = new();
 	public virtual async Task<bool> StartAsync()
 	{
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		using (await _timerLock.LockAsync().ConfigureAwait(false))
@@ -39,7 +39,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 				return false;
 				//throw new InvalidOperationException($"{GetType().Name} already started.");
 
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			//Start timer
@@ -51,7 +51,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 
 	public virtual async Task StopAsync()
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		using (await _timerLock.LockAsync().ConfigureAwait(false))
@@ -59,7 +59,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 			if (!IsActive)
 				return;
 
-			if (disposed)
+			if (_disposed)
 				return;
 
 			//Stop timer
@@ -70,12 +70,12 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 
 	public virtual async Task RestartAsync()
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		using (await _timerLock.LockAsync().ConfigureAwait(false))
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			_timer.Change(StartDelay, Timeout.InfiniteTimeSpan);
@@ -88,12 +88,12 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 #pragma warning disable VSTHRD200 // Use "Async" suffix for async methods
 	private async void TimerCallbackAsync(object? state)
 	{
-		if (disposed)
+		if (_disposed)
 			return;
 
 		using (await _ticksLock.LockAsync().ConfigureAwait(false))
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			if (!IsActive)
@@ -131,12 +131,12 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 
 	protected virtual async Task<bool> PauseTimerAsync()
 	{
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		using (await _timerLock.LockAsync().ConfigureAwait(false))
 		{
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			return _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -148,7 +148,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 		if (!IsActive)
 			return false;
 
-		if (disposed)
+		if (_disposed)
 			return false;
 
 		using (await _timerLock.LockAsync().ConfigureAwait(false))
@@ -156,7 +156,7 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 			if (!IsActive)
 				return false;
 
-			if (disposed)
+			if (_disposed)
 				return false;
 
 			return _timer.Change(TimerInterval, Timeout.InfiniteTimeSpan);
@@ -167,6 +167,11 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 	/// <inheritdoc/>
 	public async ValueTask DisposeAsync()
 	{
+		if (_disposed)
+			return;
+
+		_disposed = true;
+
 		await DisposeAsyncCoreAsync().ConfigureAwait(false);
 
 		Dispose(disposing: false);
@@ -179,13 +184,13 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
-		if (!disposed)
-		{
-			if (disposing)
-				_timer.Dispose();
+		if (_disposed)
+			return;
 
-			disposed = true;
-		}
+		_disposed = true;
+
+		if (disposing)
+			_timer.Dispose();
 	}
 
 	public void Dispose()

@@ -64,6 +64,12 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 		_builder = (TBuilder)this;
 	}
 
+	protected TraceInfoBuilderBase(TraceInfo traceInfo)
+	{
+		_traceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
+		_builder = (TBuilder)this;
+	}
+
 	public ITraceInfo Build()
 		=> _traceInfo;
 
@@ -136,9 +142,39 @@ public sealed class TraceInfoBuilder : TraceInfoBuilderBase<TraceInfoBuilder>
 	//{
 	//}
 
+	private TraceInfoBuilder(TraceInfo traceInfo)
+		: base(traceInfo)
+	{
+	}
+
+	public TraceInfoBuilder(IServiceProvider serviceProvider, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+		: this((serviceProvider.GetService(TraceInfo.ApplicationContextType) as IApplicationContext)!, currentTraceFrame, previousTraceInfo)
+	{
+	}
+
+	public TraceInfoBuilder(IApplicationContext applicationContext, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
+		: base(
+			applicationContext?.TraceInfo.SourceSystemName ?? throw new ArgumentNullException(nameof(applicationContext)),
+			currentTraceFrame,
+			previousTraceInfo ?? applicationContext.TraceInfo)
+	{
+	}
+
 	public TraceInfoBuilder(string sourceSystemName, ITraceFrame currentTraceFrame, ITraceInfo? previousTraceInfo)
 		: base(sourceSystemName, currentTraceFrame, previousTraceInfo)
 	{
+	}
+
+	public static void ReplacePrincipal(ITraceInfo traceInfo, EnvelopePrincipal principal)
+	{
+		if (traceInfo == null)
+			throw new ArgumentNullException(nameof(traceInfo));
+
+		if (traceInfo is not TraceInfo ti)
+			throw new InvalidOperationException($"Invalid {nameof(traceInfo)} type");
+
+		var traceInfoBuilder = new TraceInfoBuilder(ti);
+		traceInfoBuilder.Principal(principal, true);
 	}
 
 	public static implicit operator TraceInfo?(TraceInfoBuilder builder)

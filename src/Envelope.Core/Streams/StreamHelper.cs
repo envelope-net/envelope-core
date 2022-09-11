@@ -1,4 +1,7 @@
-﻿namespace Envelope.Streams;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
+
+namespace Envelope.Streams;
 
 public static class StreamHelper
 {
@@ -61,4 +64,36 @@ public static class StreamHelper
 	//		}
 	//	}
 	//}
+
+	[return: NotNullIfNotNull("stream")]
+	public static string? ToString(Stream stream, Encoding? encoding = null, bool seek = false)
+	{
+		if (stream == null)
+			return null;
+
+		if (encoding == null)
+			encoding = Encoding.UTF8;
+
+		if (seek)
+			stream.Seek(0, SeekOrigin.Begin);
+
+		using var reader = new StreamReader(stream, encoding);
+		return reader.ReadToEnd();
+	}
+
+	[return: NotNullIfNotNull("stream")]
+	public static Task<string?> ToStringAsync(Stream stream, Encoding? encoding = null, bool seek = false)
+	{
+		if (stream == null)
+			return Task.FromResult((string?)null);
+
+		if (encoding == null)
+			encoding = Encoding.UTF8;
+
+		if (seek)
+			stream.Seek(0, SeekOrigin.Begin);
+
+		using var reader = new StreamReader(stream, encoding);
+		return reader.ReadToEndAsync()!;
+	}
 }
