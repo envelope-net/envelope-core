@@ -8,7 +8,7 @@ public partial class TransactionInterceptor
 		bool isReadOnly,
 		ITraceInfo traceInfo,
 		ITransactionController transactionController,
-		Action<ITraceInfo, ITransactionController> action,
+		Action<ITraceInfo, ITransactionController, string?> action,
 		string? unhandledExceptionDetail,
 		Action<ITraceInfo, Exception?, string?> onError,
 		Action? @finally,
@@ -28,7 +28,7 @@ public partial class TransactionInterceptor
 
 		try
 		{
-			action(traceInfo, transactionController);
+			action(traceInfo, transactionController, unhandledExceptionDetail);
 
 			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
 				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
@@ -134,7 +134,7 @@ public partial class TransactionInterceptor
 		bool isReadOnly,
 		ITraceInfo traceInfo,
 		ITransactionController transactionController,
-		Func<ITraceInfo, ITransactionController, T> action,
+		Func<ITraceInfo, ITransactionController, string?, T> action,
 		string? unhandledExceptionDetail,
 		Action<ITraceInfo, Exception?, string?> onError,
 		Action? @finally,
@@ -154,7 +154,7 @@ public partial class TransactionInterceptor
 
 		try
 		{
-			result = action(traceInfo, transactionController);
+			result = action(traceInfo, transactionController, unhandledExceptionDetail);
 
 			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
 				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");

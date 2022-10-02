@@ -13,7 +13,7 @@ public partial class TransactionInterceptor
 		bool isReadOnly,
 		ITraceInfo traceInfo,
 		ITransactionController transactionController,
-		Func<ITraceInfo, ITransactionController, CancellationToken, Task> action,
+		Func<ITraceInfo, ITransactionController, string?, CancellationToken, Task> action,
 		string? unhandledExceptionDetail,
 		Func<ITraceInfo, Exception?, string?, Task> onError,
 		Func<Task>? @finally,
@@ -34,7 +34,7 @@ public partial class TransactionInterceptor
 
 		try
 		{
-			await action(traceInfo, transactionController, cancellationToken).ConfigureAwait(false);
+			await action(traceInfo, transactionController, unhandledExceptionDetail, cancellationToken).ConfigureAwait(false);
 
 			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
 				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");
@@ -140,7 +140,7 @@ public partial class TransactionInterceptor
 		bool isReadOnly,
 		ITraceInfo traceInfo,
 		ITransactionController transactionController,
-		Func<ITraceInfo, ITransactionController, CancellationToken, Task<T>> action,
+		Func<ITraceInfo, ITransactionController, string?, CancellationToken, Task<T>> action,
 		string? unhandledExceptionDetail,
 		Func<ITraceInfo, Exception?, string?, Task> onError,
 		Func<Task>? @finally,
@@ -161,7 +161,7 @@ public partial class TransactionInterceptor
 
 		try
 		{
-			result = await action(traceInfo, transactionController, cancellationToken).ConfigureAwait(false);
+			result = await action(traceInfo, transactionController, unhandledExceptionDetail, cancellationToken).ConfigureAwait(false);
 
 			if (isReadOnly && transactionController.TransactionResult != TransactionResult.None)
 				throw new InvalidOperationException($"{nameof(isReadOnly)} == true | {nameof(transactionController.TransactionResult)} == {transactionController.TransactionResult}");

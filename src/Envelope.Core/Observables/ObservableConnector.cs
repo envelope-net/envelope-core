@@ -58,11 +58,11 @@ public class ObservableConnector<T>
 	}
 
 	/// <summary>
-	/// Enumerate the observers invoking the callback for each observer
+	/// Parallel enumerate the observers invoking the callback for each observer
 	/// </summary>
 	/// <param name="callback">The callback</param>
 	/// <returns>An awaitable Task for the operation</returns>
-	public Task ForEachAsync(Func<T, Task> callback)
+	public Task ParallelForEachAsync(Func<T, Task> callback)
 	{
 		if (callback == null)
 			throw new ArgumentNullException(nameof(callback));
@@ -92,6 +92,33 @@ public class ObservableConnector<T>
 			return Task.CompletedTask;
 
 		return Task.WhenAll(outputTasks);
+	}
+
+	/// <summary>
+	/// enumerate the observers invoking the callback for each observer
+	/// </summary>
+	/// <param name="callback">The callback</param>
+	/// <returns>An awaitable Task for the operation</returns>
+	public async Task ForEachAsync(Func<T, Task> callback)
+	{
+		if (callback == null)
+			throw new ArgumentNullException(nameof(callback));
+
+		T[] connected;
+		lock (_observers)
+			connected = _connected;
+
+		if (connected.Length == 0)
+			return;
+
+		if (connected.Length == 1)
+		{
+			await callback(connected[0]).ConfigureAwait(false);
+			return;
+		}
+
+		for (int i = 0; i < connected.Length; i++)
+			await callback(connected[i]).ConfigureAwait(false);
 	}
 
 #if NET6_0_OR_GREATER
