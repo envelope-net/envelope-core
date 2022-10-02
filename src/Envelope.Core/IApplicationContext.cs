@@ -6,10 +6,9 @@ using System.Runtime.CompilerServices;
 
 namespace Envelope;
 
-public interface IApplicationContext
+public interface IApplicationContext : IApplicationResourcesProvider
 {
 	ITraceInfo TraceInfo { get; }
-	IApplicationResources ApplicationResources { get; }
 	IRequestMetadata? RequestMetadata { get; }
 	IDictionary<string, object?> Items { get; }
 
