@@ -10,7 +10,8 @@ public interface IObjectPath
 	string? PropertyName { get; }
 	IObjectPath? Descendant { get; }
 	int Depth { get; }
-	
+	int? Index { get; set; }
+
 	IObjectPath GetRoot();
 	IObjectPath GetLastDescendant();
 	List<IObjectPath> GetObjectPath();

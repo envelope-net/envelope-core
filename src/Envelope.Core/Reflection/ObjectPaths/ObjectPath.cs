@@ -11,6 +11,7 @@ public abstract class ObjectPath : IObjectPath
 	public string? PropertyName { get; protected set; }
 	public ObjectPath? Descendant { get; protected set; }
 	public int Depth { get; protected set; }
+	public int? Index { get; set; }
 
 	IObjectPath? IObjectPath.Parent => Parent;
 	IObjectPath? IObjectPath.Descendant => Descendant;
@@ -94,12 +95,12 @@ public abstract class ObjectPath : IObjectPath
 		if (!usedGuids.Add(Id))
 			return;
 
-		Depth += delta;
+		Depth = delta;
 
 		if (Descendant == null)
 			return;
 
-		Descendant.IncreaseDepth(delta, usedGuids);
+		Descendant.IncreaseDepth(Depth + 1, usedGuids);
 	}
 
 	protected internal abstract ObjectPath CloneBase();
@@ -154,5 +155,7 @@ public abstract class ObjectPath : IObjectPath
 	}
 
 	public override string ToString()
-		=> string.Join(".", GetObjectPath().Select(x => x.PropertyName ?? "_"));
+		=> string.Join(".", GetObjectPath().Select(x => !string.IsNullOrWhiteSpace(x.PropertyName)
+			? (!x.Index.HasValue ? x.PropertyName : $"{x.PropertyName}[{x.Index}]")
+			: "_"));
 }

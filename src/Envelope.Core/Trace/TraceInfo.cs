@@ -36,10 +36,13 @@ public class TraceInfo : ITraceInfo
 
 	public Guid? CorrelationId { get; internal set; }
 
+	public Dictionary<string, string?> ContextProperties { get; internal set; }
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	
+
 	internal TraceInfo()
 	{
+		ContextProperties = new Dictionary<string, string?>();
 	}
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -52,6 +55,27 @@ public class TraceInfo : ITraceInfo
 
 		TraceFrame = traceFrame ?? throw new ArgumentNullException(nameof(traceFrame));
 		RuntimeUniqueKey = EnvironmentInfo.RUNTIME_UNIQUE_KEY;
+		ContextProperties = new Dictionary<string, string?>();
+	}
+
+	public ITraceInfo SetContextProperty(string key, string? value, bool force = false)
+	{
+		if (string.IsNullOrWhiteSpace(key))
+			throw new ArgumentNullException(nameof(key));
+
+		if (force || !ContextProperties.ContainsKey(key))
+			ContextProperties[key] = value;
+
+		return this;
+	}
+
+	public ITraceInfo RemoveContextProperty(string key)
+	{
+		if (string.IsNullOrWhiteSpace(key))
+			throw new ArgumentNullException(nameof(key));
+
+		ContextProperties.Remove(key);
+		return this;
 	}
 
 	public override string ToString()

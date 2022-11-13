@@ -33,4 +33,12 @@ public interface IFormFile
 	bool HasContentData { get; }
 
 	Stream? OpenReadStream(bool asMemoryStream = false);
+
+	Task<Stream?> OpenReadStreamAsync(bool asMemoryStream = false, CancellationToken cancellationToken = default);
+
+	Task CopyToAsync(Stream targetStream, CancellationToken cancellationToken = default);
+
+	byte[]? GetByteArray();
+
+	byte[]? ConvertContentToData();
 }

@@ -31,6 +31,11 @@ public class AuthenticatedUser
 			: displayName!;
 		TraceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
 	}
+
+	public override string ToString()
+	{
+		return $"{nameof(UserId)} = {UserId} | {nameof(Login)} = {Login}";
+	}
 }
 
 public class AnonymousUser : AuthenticatedUser

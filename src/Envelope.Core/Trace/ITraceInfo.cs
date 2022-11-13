@@ -40,4 +40,10 @@ public interface ITraceInfo
 	/// It is unique identifier for current request
 	/// </summary>
 	Guid? CorrelationId { get; }
+
+	Dictionary<string, string?> ContextProperties { get; }
+
+	ITraceInfo SetContextProperty(string key, string? value, bool force = false);
+
+	ITraceInfo RemoveContextProperty(string key);
 }
