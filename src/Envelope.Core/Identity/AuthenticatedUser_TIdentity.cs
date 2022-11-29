@@ -9,6 +9,7 @@ public class AuthenticatedUser<TIdentity>
 	public string Login { get; }
 	public string DisplayName { get; }
 	public object? UserData { get; set; }
+	public bool IsSuperAdmin { get; set; }
 	public List<string>? Roles { get; set; }
 	public List<string>? Permissions { get; set; }
 	public List<TIdentity>? RoleIds { get; set; }

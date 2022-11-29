@@ -28,6 +28,8 @@ public class EnvelopeIdentity : ClaimsIdentity
 
 	public object? UserData { get; }
 
+	public bool IsSuperAdmin { get; }
+
 	public IReadOnlyCollection<string> Roles { get; }
 
 	public IReadOnlyCollection<Guid> RoleIds { get; }
@@ -43,6 +45,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		string login,
 		string displayName,
 		object? userData,
+		bool isSuperAdmin,
 		List<string>? roles,
 		List<Guid>? roleIds,
 		List<string>? permissions,
@@ -68,6 +71,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 			? throw new ArgumentNullException(nameof(displayName))
 			: displayName;
 		UserData = userData;
+		IsSuperAdmin = isSuperAdmin;
 		Roles = roles?.AsReadOnly() ?? EMPTY_ROLES;
 		RoleIds = roleIds?.AsReadOnly() ?? EMPTY_ROLE_IDS;
 		Permissions = permissions?.AsReadOnly() ?? EMPTY_PERMISSIONS;
@@ -81,6 +85,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		string login,
 		string displayName,
 		object? userData,
+		bool isSuperAdmin,
 		List<string>? roles,
 		List<Guid>? roleIds,
 		List<string>? permissions,
@@ -103,6 +108,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 			? throw new ArgumentNullException(nameof(displayName))
 			: displayName;
 		UserData = userData;
+		IsSuperAdmin = isSuperAdmin;
 		Roles = roles?.AsReadOnly() ?? EMPTY_ROLES;
 		RoleIds = roleIds?.AsReadOnly() ?? EMPTY_ROLE_IDS;
 		Permissions = permissions?.AsReadOnly() ?? EMPTY_PERMISSIONS;
@@ -133,12 +139,12 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (string.IsNullOrWhiteSpace(role))
 			throw new ArgumentNullException(nameof(role));
 
-		return Roles.Contains(role, StringComparer.InvariantCultureIgnoreCase);
+		return IsSuperAdmin || Roles.Contains(role, StringComparer.InvariantCultureIgnoreCase);
 	}
 
 	public bool IsInRole(Guid role)
 	{
-		return RoleIds.Contains(role);
+		return IsSuperAdmin || RoleIds.Contains(role);
 	}
 
 	public bool IsInAllRoles(params string[] roles)
@@ -146,7 +152,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
 
-		return roles.All(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
+		return IsSuperAdmin || roles.All(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
 	}
 
 	public bool IsInAllRoles(params Guid[] roles)
@@ -154,7 +160,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
 
-		return roles.All(r => RoleIds.Contains(r));
+		return IsSuperAdmin || roles.All(r => RoleIds.Contains(r));
 	}
 
 	public bool IsInAnyRole(params string[] roles)
@@ -162,7 +168,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
 
-		return roles.Any(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
+		return IsSuperAdmin || roles.Any(r => Roles.Contains(r, StringComparer.InvariantCultureIgnoreCase));
 	}
 
 	public bool IsInAnyRole(params Guid[] roles)
@@ -170,7 +176,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (roles == null)
 			throw new ArgumentNullException(nameof(roles));
 
-		return roles.Any(r => RoleIds.Contains(r));
+		return IsSuperAdmin || roles.Any(r => RoleIds.Contains(r));
 	}
 
 	public bool HasPermission(string permission)
@@ -178,12 +184,12 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (string.IsNullOrWhiteSpace(permission))
 			throw new ArgumentNullException(nameof(permission));
 
-		return Permissions.Contains(permission, StringComparer.InvariantCultureIgnoreCase);
+		return IsSuperAdmin || Permissions.Contains(permission, StringComparer.InvariantCultureIgnoreCase);
 	}
 
 	public bool HasPermission(Guid permission)
 	{
-		return PermissionIds.Contains(permission);
+		return IsSuperAdmin || PermissionIds.Contains(permission);
 	}
 
 	public bool HasAllPermissions(params string[] permissions)
@@ -191,7 +197,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.All(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
+		return IsSuperAdmin || permissions.All(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
 	}
 
 	public bool HasAllPermissions(params Guid[] permissions)
@@ -199,7 +205,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.All(p => PermissionIds.Contains(p));
+		return IsSuperAdmin || permissions.All(p => PermissionIds.Contains(p));
 	}
 
 	public bool HasAnyPermission(params string[] permissions)
@@ -207,7 +213,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.Any(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
+		return IsSuperAdmin || permissions.Any(p => Permissions.Contains(p, StringComparer.InvariantCultureIgnoreCase));
 	}
 
 	public bool HasAnyPermission(params Guid[] permissions)
@@ -215,7 +221,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.Any(r => PermissionIds.Contains(r));
+		return IsSuperAdmin || permissions.Any(r => PermissionIds.Contains(r));
 	}
 
 	public bool HasPermissionClaim(string permission)
@@ -223,7 +229,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (string.IsNullOrWhiteSpace(permission))
 			throw new ArgumentNullException(nameof(permission));
 
-		return HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission);
+		return IsSuperAdmin || HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission);
 	}
 
 	public bool HasAllPermissionClaims(params string[] permissions)
@@ -231,7 +237,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.All(permission => HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission));
+		return IsSuperAdmin || permissions.All(permission => HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission));
 	}
 
 	public bool HasAnyPermissionClaim(params string[] permissions)
@@ -239,12 +245,12 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.Any(permission => HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission));
+		return IsSuperAdmin || permissions.Any(permission => HasEnvelopeClaim(PERMISSION_CLAIM_NAME, permission));
 	}
 
 	public bool HasPermissionClaim(Guid permission)
 	{
-		return HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission);
+		return IsSuperAdmin || HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission);
 	}
 
 	public bool HasAllPermissionClaims(params Guid[] permissions)
@@ -252,7 +258,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.All(permission => HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission));
+		return IsSuperAdmin || permissions.All(permission => HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission));
 	}
 
 	public bool HasAnyPermissionClaim(params Guid[] permissions)
@@ -260,7 +266,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		if (permissions == null)
 			throw new ArgumentNullException(nameof(permissions));
 
-		return permissions.Any(permission => HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission));
+		return IsSuperAdmin || permissions.Any(permission => HasEnvelopeClaim(PERMISSION_ID_CLAIM_NAME, permission));
 	}
 
 	public override void AddClaim(Claim claim)

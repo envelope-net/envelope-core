@@ -217,6 +217,7 @@ public class EnvelopePrincipal<TIdentity> : ClaimsPrincipal
 			authenticatedUser.Login,
 			authenticatedUser.DisplayName,
 			authenticatedUser.UserData,
+			authenticatedUser.IsSuperAdmin,
 			authenticatedUser.Roles,
 			authenticatedUser.RoleIds,
 			authenticatedUser.Permissions,
