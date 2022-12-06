@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Envelope.Trace;
@@ -43,7 +44,7 @@ public class TraceFrame : ITraceFrame
 		if (!string.IsNullOrWhiteSpace(CallerFilePath))
 		{
 			var callerFileName = CallerFilePath!.Trim().EndsWith(".cs", StringComparison.InvariantCultureIgnoreCase)
-				? Path.GetFileName(CallerFilePath)
+				? $"{Directory.GetParent(CallerFilePath)?.Name}\\{Path.GetFileName(CallerFilePath)}"
 				: CallerFilePath;
 
 			sb.Append(callerFileName);
