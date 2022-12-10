@@ -21,6 +21,7 @@ public class ObjectPathRoot<T> : ObjectPath<T>, IObjectPathRoot
 		PropertyName = null;
 		Descendant = null;
 		Depth = 0;
+		Index = null;
 	}
 
 	protected internal override ObjectPath<T> CloneSelf()
@@ -30,5 +31,6 @@ public class ObjectPathRoot<T> : ObjectPath<T>, IObjectPathRoot
 			PropertyName = null,
 			Descendant = null,
 			Depth = Depth,
+			Index = null
 		};
 }

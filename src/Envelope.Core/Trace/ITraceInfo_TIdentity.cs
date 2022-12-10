@@ -29,4 +29,8 @@ public interface ITraceInfo<TIdentity>
 	/// It is unique identifier for current request
 	/// </summary>
 	Guid? CorrelationId { get; }
+
+	Dictionary<string, string> Properties { get; }
+
+	ITraceInfo<TIdentity> SetProperty(string key, string? value, bool force = false);
 }

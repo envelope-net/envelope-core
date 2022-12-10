@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Envelope.Calendar;
 
+/// <summary>
+/// https://crontab.guru/
+/// </summary>
 public sealed class CronExpression : IEquatable<CronExpression>
 {
 	private const long NotFound = 0;

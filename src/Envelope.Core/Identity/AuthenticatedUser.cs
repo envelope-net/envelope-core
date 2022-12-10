@@ -8,6 +8,7 @@ public class AuthenticatedUser
 	public string Login { get; }
 	public string DisplayName { get; }
 	public object? UserData { get; set; }
+	public bool IsSuperAdmin { get; set; }
 	public List<string>? Roles { get; set; }
 	public List<string>? Permissions { get; set; }
 	public List<Guid>? RoleIds { get; set; }
@@ -30,6 +31,11 @@ public class AuthenticatedUser
 			? Login
 			: displayName!;
 		TraceInfo = traceInfo ?? throw new ArgumentNullException(nameof(traceInfo));
+	}
+
+	public override string ToString()
+	{
+		return $"{nameof(UserId)} = {UserId} | {nameof(Login)} = {Login}";
 	}
 }
 

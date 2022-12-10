@@ -33,5 +33,6 @@ public class NavigationObjectPath<T> : ObjectPath<T>, INavigationObjectPath
 			PropertyName = PropertyName,
 			Descendant = null,
 			Depth = Depth,
+			Index = null
 		};
 }

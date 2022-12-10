@@ -23,6 +23,8 @@ public class TraceInfo<TIdentity> : ITraceInfo<TIdentity>
 
 	public Guid? CorrelationId { get; internal set; }
 
+	public Dictionary<string, string> Properties { get; }
+
 	internal TraceInfo(string sourceSystemName, ITraceFrame traceFrame)
 	{
 		SourceSystemName = !string.IsNullOrWhiteSpace(sourceSystemName)
@@ -31,6 +33,25 @@ public class TraceInfo<TIdentity> : ITraceInfo<TIdentity>
 
 		TraceFrame = traceFrame ?? throw new ArgumentNullException(nameof(traceFrame));
 		RuntimeUniqueKey = EnvironmentInfo.RUNTIME_UNIQUE_KEY;
+		Properties = new Dictionary<string, string>();
+	}
+
+	public ITraceInfo<TIdentity> SetProperty(string key, string? value, bool force = false)
+	{
+		if (string.IsNullOrWhiteSpace(key))
+			throw new ArgumentNullException(nameof(key));
+
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			Properties.Remove(key);
+		}
+		else
+		{
+			if (force || !Properties.ContainsKey(key))
+				Properties[key] = value!;
+		}
+
+		return this;
 	}
 
 	public override string ToString()

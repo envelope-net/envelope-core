@@ -1,5 +1,4 @@
 ﻿using Envelope.Identity;
-using Envelope.Infrastructure;
 
 namespace Envelope.Trace.Dto;
 
@@ -19,6 +18,8 @@ public class TraceInfoDto
 
 	public Guid? CorrelationId { get; set; }
 
+	public Dictionary<string, string?> ContextProperties { get; }
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public TraceInfoDto()
 	{
@@ -37,6 +38,7 @@ public class TraceInfoDto
 		IdUser = traceInfo.IdUser;
 		ExternalCorrelationId = traceInfo.ExternalCorrelationId;
 		CorrelationId = traceInfo.CorrelationId;
+		ContextProperties = traceInfo.ContextProperties.ToDictionary(x => x.Key, x => x.Value);
 	}
 
 	public TraceInfo ToTraceInfo(ITraceInfo? actualizeByTraceInfo)
@@ -50,7 +52,8 @@ public class TraceInfoDto
 			IdUser = IdUser,
 			ExternalCorrelationId = ExternalCorrelationId,
 			CorrelationId = CorrelationId,
-		};
+			ContextProperties = ContextProperties.ToDictionary(x => x.Key, x => x.Value)
+	};
 
 		if (actualizeByTraceInfo != null)
 		{
@@ -61,6 +64,19 @@ public class TraceInfoDto
 			traceInfo.IdUser = actualizeByTraceInfo.IdUser;
 			traceInfo.ExternalCorrelationId = actualizeByTraceInfo.ExternalCorrelationId;
 			traceInfo.CorrelationId = actualizeByTraceInfo.CorrelationId;
+			traceInfo.ContextProperties = actualizeByTraceInfo.ContextProperties.ToDictionary(x => x.Key, x => x.Value);
+
+			//foreach (var kvp in actualizeByTraceInfo.Properties)
+			//{
+			//	if (string.IsNullOrWhiteSpace(kvp.Value))
+			//	{
+			//		traceInfo.Properties.Remove(kvp.Key);
+			//	}
+			//	else
+			//	{
+			//		traceInfo.Properties[kvp.Key] = kvp.Value;
+			//	}
+			//}
 		}
 
 		return traceInfo;

@@ -23,5 +23,6 @@ public class EnumerableObjectPath<T> : NavigationObjectPath<T>, IEnumerableObjec
 			PropertyName = PropertyName,
 			Descendant = null,
 			Depth = Depth,
+			Index = null
 		};
 }

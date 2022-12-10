@@ -24,6 +24,12 @@ public interface ITraceInfoBuilder<TBuilder, TIdentity>
 	TBuilder ExternalCorrelationId(string? externalCorrelationId, bool force = false);
 
 	TBuilder CorrelationId(Guid? correlationId, bool force = false);
+
+	TBuilder SetProperty(string key, string? value, bool force = false);
+
+	TBuilder SetProperties(Dictionary<string, string?> properties, bool force = false);
+
+	TBuilder ClearProperties();
 }
 
 public abstract class TraceInfoBuilderBase<TBuilder, TIdentity> : ITraceInfoBuilder<TBuilder, TIdentity>
@@ -127,6 +133,29 @@ public abstract class TraceInfoBuilderBase<TBuilder, TIdentity> : ITraceInfoBuil
 		if (force || !_traceInfo.CorrelationId.HasValue)
 			_traceInfo.CorrelationId = correlationId;
 
+		return _builder;
+	}
+
+	public TBuilder SetProperty(string key, string? value, bool force = false)
+	{
+		_traceInfo.SetProperty(key, value, force);
+		return _builder;
+	}
+
+	public TBuilder SetProperties(Dictionary<string, string?> properties, bool force = false)
+	{
+		if (properties == null)
+			return _builder;
+
+		foreach (var kvp in properties)
+			SetProperty(kvp.Key, kvp.Value, force);
+
+		return _builder;
+	}
+
+	public TBuilder ClearProperties()
+	{
+		_traceInfo.Properties.Clear();
 		return _builder;
 	}
 }

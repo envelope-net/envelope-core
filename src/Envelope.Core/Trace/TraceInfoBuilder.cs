@@ -23,6 +23,16 @@ public interface ITraceInfoBuilder<TBuilder>
 	TBuilder ExternalCorrelationId(string? externalCorrelationId, bool force = false);
 
 	TBuilder CorrelationId(Guid? correlationId, bool force = false);
+
+	TBuilder SetContextProperty(string key, string? value, bool force = false);
+
+	TBuilder RemoveContextProperty(string key);
+
+	TBuilder SetContextProperties(Dictionary<string, string?> properties, bool force = false);
+
+	TBuilder RemoveContextProperties(List<string> properties);
+
+	TBuilder ClearProperties();
 }
 
 public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilder>
@@ -57,7 +67,8 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 				IdUser = previousTraceInfo.IdUser,
 				Principal = previousTraceInfo.Principal,
 				ExternalCorrelationId = previousTraceInfo.ExternalCorrelationId,
-				CorrelationId = previousTraceInfo.CorrelationId
+				CorrelationId = previousTraceInfo.CorrelationId,
+				ContextProperties = previousTraceInfo.ContextProperties.ToDictionary(x => x.Key, x => x.Value)
 			};
 		}
 
@@ -131,6 +142,46 @@ public abstract class TraceInfoBuilderBase<TBuilder> : ITraceInfoBuilder<TBuilde
 		if (force || !_traceInfo.CorrelationId.HasValue)
 			_traceInfo.CorrelationId = correlationId;
 
+		return _builder;
+	}
+
+	public TBuilder SetContextProperty(string key, string? value, bool force = false)
+	{
+		_traceInfo.SetContextProperty(key, value, force);
+		return _builder;
+	}
+
+	public TBuilder RemoveContextProperty(string key)
+	{
+		_traceInfo.RemoveContextProperty(key);
+		return _builder;
+	}
+
+	public TBuilder SetContextProperties(Dictionary<string, string?> properties, bool force = false)
+	{
+		if (properties == null)
+			return _builder;
+
+		foreach (var kvp in properties)
+			SetContextProperty(kvp.Key, kvp.Value, force);
+
+		return _builder;
+	}
+
+	public TBuilder RemoveContextProperties(List<string> properties)
+	{
+		if (properties == null)
+			return _builder;
+
+		foreach (var key in properties)
+			RemoveContextProperty(key);
+
+		return _builder;
+	}
+
+	public TBuilder ClearProperties()
+	{
+		_traceInfo.ContextProperties.Clear();
 		return _builder;
 	}
 }

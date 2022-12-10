@@ -33,5 +33,6 @@ public class PropertyObjectPath<T> : ObjectPath<T>, IPropertyObjectPath
 			PropertyName = PropertyName,
 			Descendant = null,
 			Depth = Depth,
+			Index = null
 		};
 }
