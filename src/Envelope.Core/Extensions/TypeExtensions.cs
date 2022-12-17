@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 
@@ -468,11 +469,18 @@ public static class TypeExtensions
 		}
 	}
 
+	private static readonly ConcurrentDictionary<Type, object?> _defaultValues = new();
 	public static object? GetDefaultValue(this Type type)
 	{
 		if (type.IsValueType && Nullable.GetUnderlyingType(type) == null)
 		{
-			return Activator.CreateInstance(type);
+			if (!_defaultValues.TryGetValue(type, out var defaultValue))
+			{
+				defaultValue = Activator.CreateInstance(type);
+				_defaultValues.TryAdd(type, defaultValue);
+			}
+
+			return defaultValue;
 		}
 		else
 		{
@@ -480,11 +488,18 @@ public static class TypeExtensions
 		}
 	}
 
+	private static readonly ConcurrentDictionary<Type, object?> _defaultNullableValues = new();
 	public static object? GetDefaultNullableValue(this Type type)
 	{
 		if (type.IsValueType)
 		{
-			return Activator.CreateInstance(GetUnderlyingNullableType(type));
+			if (!_defaultNullableValues.TryGetValue(type, out var defaultValue))
+			{
+				defaultValue = Activator.CreateInstance(GetUnderlyingNullableType(type));
+				_defaultNullableValues.TryAdd(type, defaultValue);
+			}
+
+			return defaultValue;
 		}
 		else
 		{

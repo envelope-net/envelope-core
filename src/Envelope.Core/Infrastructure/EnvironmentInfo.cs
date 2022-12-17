@@ -4,7 +4,7 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 {
 	public static readonly Guid RUNTIME_UNIQUE_KEY = Guid.NewGuid();
 
-	public static readonly EnvironmentInfo Empty = new(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+	public static readonly EnvironmentInfo Empty = new(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null!);
 
 	public Guid RuntimeUniqueKey => RUNTIME_UNIQUE_KEY;
 	public DateTimeOffset? CreatedUtc { get; set; }
@@ -26,6 +26,7 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 	public string? OperatingSystemVersion { get; }
 	public string? ProcessArchitecture { get; }
 	public string? CommandLine { get; }
+	public string ApplicationName { get; set; }
 
 	public EnvironmentInfo(
 		string? runningEnvironment,
@@ -46,7 +47,8 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 		string? operatingSystemVersion,
 		string? operatingSystemArchitecture,
 		string? processArchitecture,
-		string? commandLine)
+		string? commandLine,
+		string applicationName)
 	{
 		RunningEnvironment = runningEnvironment;
 		CreatedUtc = created;
@@ -67,6 +69,7 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 		OperatingSystemVersion = operatingSystemVersion;
 		ProcessArchitecture = processArchitecture;
 		CommandLine = commandLine;
+		ApplicationName = applicationName;
 	}
 
 	public IDictionary<string, object?> ToDictionary(Serializer.ISerializer? serializer = null)
@@ -133,6 +136,9 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 		if (!string.IsNullOrWhiteSpace(CommandLine))
 			dict.Add(nameof(CommandLine), CommandLine);
 
+		if (!string.IsNullOrWhiteSpace(ApplicationName))
+			dict.Add(nameof(ApplicationName), ApplicationName);
+
 		return dict;
 	}
 
@@ -171,6 +177,7 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 			hashCode = (hashCode * 397) ^ (OperatingSystemVersion != null ? OperatingSystemVersion.GetHashCode() : 0);
 			hashCode = (hashCode * 397) ^ (ProcessArchitecture != null ? ProcessArchitecture.GetHashCode() : 0);
 			hashCode = (hashCode * 397) ^ (CommandLine != null ? CommandLine.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ (ApplicationName != null ? ApplicationName.GetHashCode() : 0);
 			return hashCode;
 		}
 	}
@@ -196,6 +203,7 @@ public struct EnvironmentInfo : IEnvironmentInfo, Serializer.IDictionaryObject
 			&& string.Equals(OperatingSystemArchitecture, other.OperatingSystemArchitecture)
 			&& string.Equals(OperatingSystemVersion, other.OperatingSystemVersion)
 			&& string.Equals(ProcessArchitecture, other.ProcessArchitecture)
-			&& string.Equals(CommandLine, other.CommandLine);
+			&& string.Equals(CommandLine, other.CommandLine)
+			&& string.Equals(ApplicationName, other.ApplicationName);
 	}
 }
