@@ -6,6 +6,9 @@ using System.Runtime.CompilerServices;
 
 namespace Envelope;
 
+#if NET6_0_OR_GREATER
+[Envelope.Serializer.JsonPolymorphicConverter]
+#endif
 public interface IApplicationContext : IApplicationResourcesProvider
 {
 	ITraceInfo TraceInfo { get; }

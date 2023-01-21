@@ -6,6 +6,9 @@ using System.Text.Json.Serialization;
 
 namespace Envelope.Web;
 
+#if NET6_0_OR_GREATER
+[Envelope.Serializer.JsonPolymorphicConverter]
+#endif
 public interface IRequestMetadata
 {
 	IReadOnlyList<KeyValuePair<string, List<string>>>? Query { get; }

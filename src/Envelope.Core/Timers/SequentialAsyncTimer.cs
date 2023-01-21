@@ -7,10 +7,11 @@ public class SequentialAsyncTimer : BaseSequentialAsyncTimer
 
 	public SequentialAsyncTimer(
 		object? state,
+		Func<object?>? onTimerTickStateFunc,
 		TimeSpan timerInterval,
 		Func<object?, Task<bool>> timerCallback,
 		Func<object?, Exception, Task<bool>>? exceptionCallback = null)
-		: base(state, timerInterval)
+		: base(state, onTimerTickStateFunc, timerInterval)
 	{
 		_timerCallback = timerCallback ?? throw new ArgumentNullException(nameof(timerCallback));
 		_exceptionCallback = exceptionCallback;
@@ -18,11 +19,12 @@ public class SequentialAsyncTimer : BaseSequentialAsyncTimer
 
 	public SequentialAsyncTimer(
 		object? state,
+		Func<object?>? onTimerTickStateFunc,
 		TimeSpan startDelay,
 		TimeSpan timerInterval,
 		Func<object?, Task<bool>> timerCallback,
 		Func<object?, Exception, Task<bool>>? exceptionCallback = null)
-		: base(state, startDelay, timerInterval)
+		: base(state, onTimerTickStateFunc, startDelay, timerInterval)
 	{
 		_timerCallback = timerCallback ?? throw new ArgumentNullException(nameof(timerCallback));
 		_exceptionCallback = exceptionCallback;
@@ -38,23 +40,25 @@ public class SequentialAsyncTimer : BaseSequentialAsyncTimer
 
 	public static async Task<SequentialAsyncTimer> StartAsync(
 		object? state,
+		Func<object?>? onTimerTickStateFunc,
 		TimeSpan timerInterval,
 		Func<object?, Task<bool>> timerCallback,
 		Func<object?, Exception, Task<bool>>? exceptionCallback = null)
 	{
-		var timer = new SequentialAsyncTimer(state, timerInterval, timerCallback, exceptionCallback);
+		var timer = new SequentialAsyncTimer(state, onTimerTickStateFunc, timerInterval, timerCallback, exceptionCallback);
 		await timer.StartAsync();
 		return timer;
 	}
 
 	public static async Task<SequentialAsyncTimer> StartAsync(
 		object? state,
+		Func<object?>? onTimerTickStateFunc,
 		TimeSpan startDelay,
 		TimeSpan timerInterval,
 		Func<object?, Task<bool>> timerCallback,
 		Func<object?, Exception, Task<bool>>? exceptionCallback = null)
 	{
-		var timer = new SequentialAsyncTimer(state, startDelay, timerInterval, timerCallback, exceptionCallback);
+		var timer = new SequentialAsyncTimer(state, onTimerTickStateFunc, startDelay, timerInterval, timerCallback, exceptionCallback);
 		await timer.StartAsync();
 		return timer;
 	}

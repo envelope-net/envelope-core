@@ -47,6 +47,9 @@ public sealed class CronAsyncTimer : IDisposable
 		_timer = new(s => ((State)s!).Signal(), _state, Timeout.Infinite, Timeout.Infinite);
 	}
 
+	public DateTimeOffset? GetNextOccurrence(DateTimeOffset now)
+		=> _expression.GetNextOccurrence(now, _zone);
+
 	/// <summary>Wait for the next tick of the timer, or for the timer to be stopped.</summary>
 	/// <param name="cancellationToken">
 	/// A <see cref="CancellationToken"/> to use to cancel the asynchronous wait. If cancellation is requested, it affects only the single wait operation;
