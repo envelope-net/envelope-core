@@ -9,19 +9,21 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 {
 	protected readonly Timer _timer;
 	private bool _disposed;
+	private readonly Func<object?>? _onTimerTickStateFunc;
 
 	public TimeSpan StartDelay { get; set; }
 	public TimeSpan TimerInterval { get; set; }
 	public bool IsInProcess { get; private set; }
 	public bool IsActive { get; private set; }
 
-	public BaseSequentialAsyncTimer(object? state, TimeSpan timerInterval)
-		: this(state, TimeSpan.Zero, timerInterval)
+	public BaseSequentialAsyncTimer(object? state, Func<object?>? onTimerTickStateFunc, TimeSpan timerInterval)
+		: this(state, onTimerTickStateFunc, TimeSpan.Zero, timerInterval)
 	{
 	}
 
-	public BaseSequentialAsyncTimer(object? state, TimeSpan startDelay, TimeSpan timerInterval)
+	public BaseSequentialAsyncTimer(object? state, Func<object?>? onTimerTickStateFunc, TimeSpan startDelay, TimeSpan timerInterval)
 	{
+		_onTimerTickStateFunc = onTimerTickStateFunc;
 		StartDelay = startDelay;
 		TimerInterval = timerInterval;
 		_timer = new Timer(TimerCallbackAsync, state, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -102,6 +104,15 @@ public abstract class BaseSequentialAsyncTimer : IDisposable
 			await PauseTimerAsync().ConfigureAwait(false);
 
 			var resume = false;
+
+			if (_onTimerTickStateFunc != null)
+			{
+				try
+				{
+					state = _onTimerTickStateFunc();
+				}
+				catch { }
+			}
 
 			try
 			{

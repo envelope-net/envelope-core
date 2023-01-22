@@ -1,5 +1,8 @@
 ﻿namespace Envelope.Infrastructure;
 
+#if NET6_0_OR_GREATER
+[Envelope.Serializer.JsonPolymorphicConverter]
+#endif
 public interface IEnvironmentInfo : Serializer.IDictionaryObject
 {
 	Guid RuntimeUniqueKey { get; }

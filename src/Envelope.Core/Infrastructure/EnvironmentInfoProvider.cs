@@ -2,7 +2,7 @@
 
 public static class EnvironmentInfoProvider
 {
-	public static EnvironmentInfo GetEnvironmentInfo()
+	public static EnvironmentInfo GetEnvironmentInfo(string applicationName)
 	{
 		return new EnvironmentInfo(
 			EnvironmentInfoProviderCache.Instance.RunningEnvironment,
@@ -23,6 +23,7 @@ public static class EnvironmentInfoProvider
 			EnvironmentInfoProviderCache.Instance.OperatingSystemVersion,
 			EnvironmentInfoProviderCache.Instance.OperatingSystemArchitecture,
 			EnvironmentInfoProviderCache.Instance.ProcessArchitecture,
-			EnvironmentInfoProviderCache.Instance.CommandLine);
+			EnvironmentInfoProviderCache.Instance.CommandLine,
+			applicationName);
 	}
 }
