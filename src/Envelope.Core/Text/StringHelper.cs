@@ -44,6 +44,17 @@ public class CharInfo
 
 public static class StringHelper
 {
+	private static readonly Lazy<List<string>> _xmlBeautifyContentTypes = new(() => new List<string>
+	{
+		"xhtml",
+		"xml"
+	});
+
+	private static readonly Lazy<List<string>> _jsonBeautifyContentTypes = new(() => new List<string>
+	{
+		"json"
+	});
+
 	public class CharDefinition
 	{
 		public char Char { get; }
@@ -840,6 +851,49 @@ public static class StringHelper
 		writer.Flush();
 		return Encoding.UTF8.GetString(stream.ToArray());
 #endif
+	}
+
+	public static string BeautifyXml(string xml)
+	{
+		if (string.IsNullOrWhiteSpace(xml))
+			return xml;
+
+		try
+		{
+			var doc = System.Xml.Linq.XDocument.Parse(xml);
+			return doc.ToString();
+		}
+		catch
+		{
+			return xml;
+		}
+	}
+
+	public static string? BeautifyContent(string content, string contentType)
+	{
+		if (string.IsNullOrWhiteSpace(content))
+			return content ?? "";
+
+		if (string.IsNullOrWhiteSpace(contentType))
+			return content.Replace("\\r\\n", "\r\n").Replace("\\n", "\n");
+
+		var newContent = content;
+		if (_jsonBeautifyContentTypes.Value.Any(x => -1 < contentType.IndexOf(x, StringComparison.InvariantCultureIgnoreCase)))
+		{
+			try
+			{
+				newContent = BeautifyJson(content);
+			}
+			catch
+			{
+			}
+		}
+		else if (_xmlBeautifyContentTypes.Value.Any(x => -1 < contentType.IndexOf(x, StringComparison.InvariantCultureIgnoreCase)))
+		{
+			newContent = BeautifyXml(content);
+		}
+
+		return newContent?.Replace("\\r\\n", "\r\n").Replace("\\n", "\n") ?? content.Replace("\\r\\n", "\r\n").Replace("\\n", "\n");
 	}
 
 	[return: NotNullIfNotNull("text")]
