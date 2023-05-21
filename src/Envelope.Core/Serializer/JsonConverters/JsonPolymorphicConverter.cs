@@ -6,10 +6,24 @@ namespace Envelope.Serializer;
 
 public class JsonPolymorphicConverter<TInterface> : JsonConverter<TInterface>
 {
-	private readonly Type _selfType = typeof(TInterface);
-
 	public override TInterface Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		=> throw new NotSupportedException($"Envelope.Serializer.{nameof(JsonPolymorphicConverter<TInterface>)}");
+
+	public override void Write(Utf8JsonWriter writer, TInterface value, JsonSerializerOptions options)
+	{
+		if (value == null)
+			throw new ArgumentNullException(nameof(value));
+
+		System.Text.Json.JsonSerializer.Serialize(writer, value, value.GetType(), options);
+	}
+}
+
+public class JsonPolymorphicConverter<TInterface, TReturnType> : JsonConverter<TInterface>
+{
+	private readonly Type _returnType = typeof(TReturnType);
+
+	public override TInterface Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		=> (TInterface)System.Text.Json.JsonSerializer.Deserialize(ref reader, _returnType, options)!;
 
 	public override void Write(Utf8JsonWriter writer, TInterface value, JsonSerializerOptions options)
 	{

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Envelope.Calendar;
 
@@ -20,6 +21,119 @@ public static class CalendarHelper
 	private const int DaysPer100Years = DaysPer4Years * 25 - 1;  // 36524
 																 // Number of days in 400 years
 	private const int DaysPer400Years = DaysPer100Years * 4 + 1; // 146097
+
+	private static readonly Lazy<ConcurrentDictionary<int, List<DateTime>>> _slovakRestDays =
+		new(() => new ConcurrentDictionary<int, List<DateTime>>());
+
+	private static readonly Lazy<DateComparer> _dateComparer =
+		new(() => new DateComparer());
+
+	public static DateTime GetGregorianEasterSunday(int year)
+	{
+		int a = year % 19;
+		int b = year % 4;
+		int c = year % 7;
+		int m = 24;
+		int n = 5;
+		int d = ((19 * a) + m) % 30;
+		int e = (n + (2 * b) + (4 * c) + (6 * d)) % 7;
+		int march = 22 + d + e;
+		int april = d + e - 9;
+
+		return (march <= 31)
+			? new DateTime(year, 3, march)
+			: new DateTime(year, 4, april);
+	}
+
+	public static List<DateTime> GetSlovakRestDays(int year)
+		=> _slovakRestDays.Value.GetOrAdd(year, y =>
+		{
+			var result = new List<DateTime>()
+			{
+				new DateTime(year, 1, 1),  //Deň vzniku Slovenskej republiky - štátny sviatok
+				new DateTime(year, 1, 6),  //Zjavenie Pána (Traja králi) - deň pracovného pokoja
+				//Veľký piatok - deň pracovného pokoja
+				//Veľkonočný pondelok - deň pracovného pokoja
+				new DateTime(year, 5, 1),  //Sviatok práce - deň pracovného pokoja
+				new DateTime(year, 5, 8),  //Deň víťazstva nad fašizmom - deň pracovného pokoja
+				new DateTime(year, 7, 5),  //Sviatok svätého Cyrila a Metoda - štátny sviatok
+				new DateTime(year, 8, 29), //Výročie SNP - štátny sviatok
+				new DateTime(year, 9, 1),  //Deň Ústavy Slovenskej republiky - štátny sviatok
+				new DateTime(year, 9, 15), //Sedembolestná Panna Mária - deň pracovného pokoja
+				new DateTime(year, 11, 1), //Sviatok všetkých svätých - deň pracovného pokoja
+				new DateTime(year, 11, 17),//Deň boja za slobodu a demokraciu - štátny sviatok
+				new DateTime(year, 12, 24),//Štedrý deň - deň pracovného pokoja
+				new DateTime(year, 12, 25),//Prvý sviatok vianočný - deň pracovného pokoja
+				new DateTime(year, 12, 26),//Druhý sviatok vianočný - deň pracovného pokoja
+		};
+
+			DateTime easterSunday = GetGregorianEasterSunday(year);
+			DateTime easterFriday = easterSunday.AddDays(-2); //Veľký piatok - deň pracovného pokoja
+			DateTime easterMonday = easterSunday.AddDays(1);  //Veľkonočný pondelok - deň pracovného pokoja
+			result.Add(easterFriday);
+			result.Add(easterMonday);
+			result = result.OrderBy(x => x).ToList();
+			return result;
+		});
+
+	public static bool IsWeekend(DateTime date)
+		=> date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+
+	public static bool IsWorkday(DateTime date, bool includeWeekends = false)
+		=> !GetSlovakRestDays(date.Year).Contains(date, _dateComparer.Value)
+			&& (includeWeekends || !IsWeekend(date));
+
+	public static DateTime GetPreviousWorkday(DateTime date, bool includeWeekends = false)
+	{
+		DateTime result = date.AddDays(-1);
+		while (!IsWorkday(result, includeWeekends))
+		{
+			result = result.AddDays(-1);
+		}
+		return result;
+	}
+
+	public static DateTime GetNextWorkday(DateTime date, bool includeWeekends = false)
+	{
+		DateTime result = date.AddDays(1);
+		while (!IsWorkday(result, includeWeekends))
+		{
+			result = result.AddDays(1);
+		}
+		return result;
+	}
+
+	public static List<DateTime> GetMonthWorkDays(int month, int year, bool includeWeekends = false)
+	{
+		var workDays = new List<DateTime>();
+
+		var day = new DateTime(year, month, 1).AddDays(-1);
+		var workDay = GetNextWorkday(day, includeWeekends);
+
+		while (workDay.Month == month)
+		{
+			workDays.Add(workDay);
+			workDay = GetNextWorkday(workDay, includeWeekends);
+		}
+
+		return workDays;
+	}
+
+	public static List<DateTime> GetYearWorkDays(int year, bool includeWeekends = false)
+	{
+		var workDays = new List<DateTime>();
+
+		var day = new DateTime(year, 1, 1).AddDays(-1);
+		var workDay = GetNextWorkday(day, includeWeekends);
+
+		while (workDay.Year == year)
+		{
+			workDays.Add(workDay);
+			workDay = GetNextWorkday(workDay, includeWeekends);
+		}
+
+		return workDays;
+	}
 
 	private static readonly int[] DaysToMonth365 =
 	{
@@ -150,5 +264,18 @@ public static class CalendarHelper
 	public static bool IsLastDayOfWeek(int year, int month, int day)
 	{
 		return day + DaysPerWeekCount > GetDaysInMonth(year, month);
+	}
+
+	private class DateComparer : IEqualityComparer<DateTime>
+	{
+		public bool Equals(DateTime x, DateTime y)
+		{
+			return x.Date.Equals(y.Date);
+		}
+
+		public int GetHashCode(DateTime obj)
+		{
+			return obj.Date.GetHashCode();
+		}
 	}
 }

@@ -10,14 +10,16 @@ public class JsonPolymorphicConverterFactory : JsonConverterFactory
 {
 	private static readonly ConcurrentDictionary<Type, JsonConverter?> _converters = new();
 	private readonly bool _createdByJsonPolymorphicConverterAttribute = false;
+	private readonly Type? _returnType;
 
 	public JsonPolymorphicConverterFactory()
 	{
 	}
 
-	public JsonPolymorphicConverterFactory(bool createdByJsonPolymorphicConverterAttribute)
+	public JsonPolymorphicConverterFactory(bool createdByJsonPolymorphicConverterAttribute, Type? returnType)
 	{
 		_createdByJsonPolymorphicConverterAttribute = createdByJsonPolymorphicConverterAttribute;
+		_returnType = returnType;
 	}
 
 	public override bool CanConvert(Type typeToConvert) =>
@@ -25,10 +27,19 @@ public class JsonPolymorphicConverterFactory : JsonConverterFactory
 		|| typeToConvert.GetCustomAttribute<JsonPolymorphicSerializerAttribute>() != null;
 
 	public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-		=> _converters.GetOrAdd(
+		=> _returnType == null
+		? _converters.GetOrAdd(
 				typeToConvert,
 				type => (JsonConverter?)Activator.CreateInstance(
 					typeof(JsonPolymorphicConverter<>).MakeGenericType(typeToConvert),
+					BindingFlags.Instance | BindingFlags.Public,
+					null,
+					Array.Empty<object>(),
+					null))
+		: _converters.GetOrAdd(
+				typeToConvert,
+				type => (JsonConverter?)Activator.CreateInstance(
+					typeof(JsonPolymorphicConverter<,>).MakeGenericType(typeToConvert, _returnType),
 					BindingFlags.Instance | BindingFlags.Public,
 					null,
 					Array.Empty<object>(),

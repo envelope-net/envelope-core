@@ -6,7 +6,14 @@ namespace Envelope.Serializer;
 [AttributeUsage(AttributeTargets.Interface)]
 public class JsonPolymorphicConverterAttribute : JsonConverterAttribute
 {
+	public Type? ReturnType { get; }
+
+	public JsonPolymorphicConverterAttribute(Type? returnType = null)
+	{
+		ReturnType = returnType;
+	}
+
 	public override JsonConverter? CreateConverter(Type typeToConvert)
-		=> new JsonPolymorphicConverterFactory(true);
+		=> new JsonPolymorphicConverterFactory(true, ReturnType);
 }
 #endif

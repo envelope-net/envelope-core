@@ -34,7 +34,7 @@ internal class EnvironmentInfoProviderCache
 	{
 		ProcessArchitecture = GetSafeString(GetProcessArchitecture);
 		OperatingSystemVersion = GetSafeString(GetOSVersion);
-		OperatingSystemPlatform = GetSafeString(GetOSPlatform);
+		OperatingSystemPlatform = GetSafeString(OSPlatformHelper.GetOSPlatform);
 		OperatingSystemArchitecture = GetSafeString(GetOSArchitecture);
 		MachineName = GetSafeString(() => Environment.MachineName);
 		Is64BitOperatingSystem = Environment.Is64BitOperatingSystem;
@@ -91,22 +91,6 @@ internal class EnvironmentInfoProviderCache
 			ProcessName = GetUsefulProcessName("UWP");
 		}
 	}
-
-#if (NETSTANDARD2_0 || NETSTANDARD2_1 || NET6_0_OR_GREATER)
-	private static string GetOSPlatform()
-	{
-		var platform = OSPlatform.Create("Other Platform");
-		var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-		platform = isWindows ? OSPlatform.Windows : platform;
-		var isOsx = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-		platform = isOsx ? OSPlatform.OSX : platform;
-		var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-		platform = isLinux ? OSPlatform.Linux : platform;
-		return platform.ToString();
-	}
-#else
-	private static string GetOSPlatform() { return Environment.OSVersion.Platform.ToString(); }
-#endif
 
 #if (NETSTANDARD2_0 || NETSTANDARD2_1 || NET6_0_OR_GREATER)
 	private static string GetProcessArchitecture()

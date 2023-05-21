@@ -10,6 +10,7 @@ public class ResponseDto : Serializer.IDictionaryObject
 	public string? ExternalCorrelationId { get; set; }
 	public int? StatusCode { get; set; }
 	public string? Headers { get; set; }
+	public string? ContentType { get; set; }
 	public string? Body { get; set; }
 	public byte[]? BodyByteArray { get; set; }
 	public string? Error { get; set; }
@@ -40,6 +41,9 @@ public class ResponseDto : Serializer.IDictionaryObject
 
 		if (!string.IsNullOrWhiteSpace(Headers))
 			dict.Add(nameof(Headers), Headers);
+
+		if (!string.IsNullOrWhiteSpace(ContentType))
+			dict.Add(nameof(ContentType), ContentType);
 
 		if (!string.IsNullOrWhiteSpace(Body))
 			dict.Add(nameof(Body), Body);
