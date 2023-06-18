@@ -10,7 +10,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 	public const string LOGIN_CLAIM_NAME = "login";
 	public const string DISPLAYNAME_CLAIM_NAME = "displayName";
 	public const string USER_ID_CLAIM_NAME = "userId";
-	public const string ROLE_CLAIM_NAME = "role";
+	//public const string ROLE_CLAIM_NAME = "role";
 	public const string ROLE_ID_CLAIM_NAME = "roleId";
 	public const string PERMISSION_CLAIM_NAME = "permission";
 	public const string PERMISSION_ID_CLAIM_NAME = "permissionId";
@@ -92,7 +92,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 		List<Guid>? permissionIds,
 		bool rolesToClams,
 		bool permissionsToClaims)
-		: base(identity, (identity as ClaimsIdentity)?.Claims)
+		: base(identity)
 	{
 		//if (identity is WindowsIdentity winIdentity)
 		//	WindowsIdentity = winIdentity;
@@ -124,7 +124,7 @@ public class EnvelopeIdentity : ClaimsIdentity
 
 		if (rolesToClams)
 		{
-			AddClaims(ROLE_CLAIM_NAME, Roles);
+			AddClaims(ClaimTypes.Role, Roles);
 			AddClaims(ROLE_ID_CLAIM_NAME, RoleIds);
 		}
 		if (permissionsToClaims)

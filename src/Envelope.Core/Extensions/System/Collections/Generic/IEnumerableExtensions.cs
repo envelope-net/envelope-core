@@ -1,4 +1,6 @@
 ﻿using Envelope.Collections;
+using Envelope.Exceptions;
+using Envelope.Queries.Sorting;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -339,6 +341,16 @@ public static class IEnumerableExtensions
 
 	public static IEnumerable<T[]> Permutations<T>(this IEnumerable<T> values)
 		=> ArrayHelper.Permutations(values.ToArray());
+
+	public static IEnumerable<T> Sort<T>(this IEnumerable<T> source, Action<SortDescriptorBuilder<T>> sortBuilder)
+	{
+		Throw.ArgumentNull(source);
+		Throw.ArgumentNull(sortBuilder);
+
+		var builder = new SortDescriptorBuilder<T>();
+		sortBuilder.Invoke(builder);
+		return builder.Apply(source);
+	}
 }
 
 public class IOrderedEnumerableNoOrderWrapper<T> : IOrderedEnumerable<T>
