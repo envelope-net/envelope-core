@@ -17,7 +17,7 @@ public static class XmlSerializerHelper
 		string? location)
 	{
 		if (type == null)
-			throw new System.ArgumentNullException(nameof(type));
+			throw new ArgumentNullException(nameof(type));
 
 		XmlSerializer serializer;
 
@@ -59,7 +59,7 @@ public static class XmlSerializerHelper
 		return serializer;
 	}
 
-	public static object? ReadFromXml(
+	public static object? DeserializeFromXmlFile(
 		string xmlFilePath,
 		Type type,
 		Encoding? encoding = null,
@@ -78,10 +78,7 @@ public static class XmlSerializerHelper
 		if (type == null)
 			throw new ArgumentNullException(nameof(type));
 
-		if (encoding == null)
-			encoding = Encoding.UTF8;
-		//else
-		//	Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		encoding ??= Encoding.UTF8;
 
 		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
 
@@ -101,7 +98,7 @@ public static class XmlSerializerHelper
 		}
 	}
 
-	public static T? ReadFromXml<T>(
+	public static T? DeserializeFromXmlFile<T>(
 		string xmlFilePath,
 		Encoding? encoding = null,
 		bool unzipXml = false,
@@ -113,13 +110,13 @@ public static class XmlSerializerHelper
 		string? defaultNamespace = null,
 		string? location = null)
 	{
-		var result = ReadFromXml(xmlFilePath, typeof(T), encoding, unzipXml, fileAccess, fileSahre, overrides, extraTypes, root, defaultNamespace, location);
+		var result = DeserializeFromXmlFile(xmlFilePath, typeof(T), encoding, unzipXml, fileAccess, fileSahre, overrides, extraTypes, root, defaultNamespace, location);
 		return result == null
 			? default
 			: (T)result;
 	}
 
-	public static object? ReadFromString(
+	public static object? DeserializeFromString(
 		string xmlObject,
 		Type type,
 		Encoding? encoding = null,
@@ -135,10 +132,7 @@ public static class XmlSerializerHelper
 		if (type == null)
 			throw new ArgumentNullException(nameof(type));
 
-		if (encoding == null)
-			encoding = Encoding.UTF8;
-		//else
-		//	Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		encoding ??= Encoding.UTF8;
 
 		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
 
@@ -157,13 +151,13 @@ public static class XmlSerializerHelper
 		string? defaultNamespace = null,
 		string? location = null)
 	{
-		var result = ReadFromString(xmlObject, typeof(T), encoding, overrides, extraTypes, root, defaultNamespace, location);
+		var result = DeserializeFromString(xmlObject, typeof(T), encoding, overrides, extraTypes, root, defaultNamespace, location);
 		return result == null
 			? default
 			: (T)result;
 	}
 
-	public static object? ReadFromByteArray(
+	public static object? Deserialize(
 		byte[] xmlObject,
 		Type type,
 		bool unzipXml = false,
@@ -180,11 +174,11 @@ public static class XmlSerializerHelper
 			throw new ArgumentNullException(nameof(type));
 
 		using var memoryStream = new MemoryStream(xmlObject);
-		var objectFromXml = ReadFromStream(memoryStream, type, unzipXml, overrides, extraTypes, root, defaultNamespace, location);
+		var objectFromXml = Deserialize(memoryStream, type, unzipXml, overrides, extraTypes, root, defaultNamespace, location);
 		return objectFromXml;
 	}
 
-	public static T? ReadFromByteArray<T>(
+	public static T? Deserialize<T>(
 		byte[] xmlObject,
 		bool unzipXml = false,
 		XmlAttributeOverrides? overrides = null,
@@ -193,13 +187,13 @@ public static class XmlSerializerHelper
 		string? defaultNamespace = null,
 		string? location = null)
 	{
-		var result = ReadFromByteArray(xmlObject, typeof(T), unzipXml, overrides, extraTypes, root, defaultNamespace, location);
+		var result = Deserialize(xmlObject, typeof(T), unzipXml, overrides, extraTypes, root, defaultNamespace, location);
 		return result == null
 			? default
 			: (T)result;
 	}
 
-	public static object? ReadFromStream(
+	public static object? Deserialize(
 		Stream xmlStream,
 		Type type,
 		bool unzipXml = false,
@@ -233,7 +227,7 @@ public static class XmlSerializerHelper
 		}
 	}
 
-	public static T? ReadFromStream<T>(
+	public static T? Deserialize<T>(
 		Stream xmlStream,
 		bool unzipXml = false,
 		XmlAttributeOverrides? overrides = null,
@@ -242,18 +236,16 @@ public static class XmlSerializerHelper
 		string? defaultNamespace = null,
 		string? location = null)
 	{
-		var result = ReadFromStream(xmlStream, typeof(T), unzipXml, overrides, extraTypes, root, defaultNamespace, location);
+		var result = Deserialize(xmlStream, typeof(T), unzipXml, overrides, extraTypes, root, defaultNamespace, location);
 		return result == null
 			? default
 			: (T)result;
 	}
 
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static void WriteToXml(
+	public static void SerializeToXmlFile(
 		string xmlFilePath,
 		object obj,
+		Type type,
 		Encoding? encoding = null,
 		bool zipXml = false,
 		XmlAttributeOverrides? overrides = null,
@@ -268,10 +260,10 @@ public static class XmlSerializerHelper
 		if (obj == null)
 			throw new ArgumentNullException(nameof(obj));
 
-		if (encoding == null)
-			encoding = Encoding.UTF8;
-		//else
-		//	Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		if (type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		encoding ??= Encoding.UTF8;
 
 		var dir = Path.GetDirectoryName(xmlFilePath);
 		if (string.IsNullOrWhiteSpace(dir))
@@ -280,7 +272,7 @@ public static class XmlSerializerHelper
 		if (!Directory.Exists(dir))
 			Directory.CreateDirectory(dir);
 
-		var serializer = GetXmlSerializer(obj.GetType(), overrides, extraTypes, root, defaultNamespace, location);
+		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
 
 		using var fileStream = new FileStream(xmlFilePath, FileMode.Create);
 		if (zipXml)
@@ -296,10 +288,95 @@ public static class XmlSerializerHelper
 		}
 	}
 
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static string WriteToString(
+	public static void SerializeToXmlFile(
+		string xmlFilePath,
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlFile(
+			xmlFilePath,
+			obj,
+			obj?.GetType()!,
+			encoding,
+			zipXml,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
+
+	public static void SerializeToXmlFile<T>(
+		string xmlFilePath,
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlFile(
+			xmlFilePath,
+			obj,
+			typeof(T),
+			encoding,
+			zipXml,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
+
+	public static string SerializeToString(
+		object obj,
+		Type type,
+		Encoding? encoding = null,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null,
+		bool indent = false,
+		bool omitXmlDeclaration = false)
+	{
+		if (obj == null)
+			throw new ArgumentNullException(nameof(obj));
+
+		if (type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		encoding ??= Encoding.UTF8;
+
+		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
+
+		var sb = new StringBuilder();
+		using (var stringWriter = new StringWriter(sb))
+		{
+			var settings = new XmlWriterSettings()
+			{
+				Encoding = encoding,
+				Indent = indent,
+				OmitXmlDeclaration = omitXmlDeclaration
+			};
+
+			using var xmlWriter = XmlWriter.Create(stringWriter, settings);
+			serializer.Serialize(xmlWriter, obj);
+		}
+
+		string result = sb.ToString();
+
+		if (!omitXmlDeclaration)
+			result = result.Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "<?xml version=\"1.0\" encoding=\"" + encoding.WebName + "\"?>");
+
+		return result;
+	}
+
+	public static string SerializeToString(
 		object obj,
 		Encoding? encoding = null,
 		XmlAttributeOverrides? overrides = null,
@@ -307,39 +384,45 @@ public static class XmlSerializerHelper
 		XmlRootAttribute? root = null,
 		string? defaultNamespace = null,
 		string? location = null,
-		bool indent = false)
-	{
-		if (obj == null)
-			throw new ArgumentNullException(nameof(obj));
+		bool indent = false,
+		bool omitXmlDeclaration = false)
+		=> SerializeToString(
+			obj,
+			obj?.GetType()!,
+			encoding,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location,
+			indent,
+			omitXmlDeclaration);
 
-		if (encoding == null)
-			encoding = Encoding.UTF8;
-		//else
-		//	Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-		var serializer = GetXmlSerializer(obj.GetType(), overrides, extraTypes, root, defaultNamespace, location);
-
-		using var textWriter = new StringWriter();
-		var settings = new XmlWriterSettings()
-		{
-			Encoding = encoding, // new UnicodeEncoding(false, false); // no BOM in a .NET string
-			Indent = indent,
-			OmitXmlDeclaration = false
-		};
-
-		using var xmlWriter = XmlWriter.Create(textWriter, settings);
-		serializer.Serialize(xmlWriter, obj);
-
-		string result = textWriter.ToString();
-		result = result.Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "<?xml version=\"1.0\" encoding=\"" + encoding.WebName + "\"?>");
-		return result;
-	}
-
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static XmlDocument WriteToXmlDocument(
+	public static string SerializeToString<T>(
 		object obj,
+		Encoding? encoding = null,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null,
+		bool indent = false,
+		bool omitXmlDeclaration = false)
+		=> SerializeToString(
+			obj,
+			typeof(T),
+			encoding,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location,
+			indent,
+			omitXmlDeclaration);
+
+	public static XmlDocument SerializeToXmlDocument(
+		object obj,
+		Type type,
 		XmlAttributeOverrides? overrides = null,
 		Type[]? extraTypes = null,
 		XmlRootAttribute? root = null,
@@ -349,36 +432,82 @@ public static class XmlSerializerHelper
 		if (obj == null)
 			throw new ArgumentNullException(nameof(obj));
 
+		if (type == null)
+			throw new ArgumentNullException(nameof(type));
+
 		var xmlDocument = new XmlDocument();
-		var xPathNavigator = xmlDocument.CreateNavigator();
-		if (xPathNavigator == null)
-			throw new InvalidOperationException("xPathNavigator = null");
+		var xPathNavigator = xmlDocument.CreateNavigator()
+			?? throw new InvalidOperationException("xPathNavigator = null");
 
 		using var writer = xPathNavigator.AppendChild();
-		var serializer = GetXmlSerializer(obj.GetType(), overrides, extraTypes, root, defaultNamespace, location);
+		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
 		serializer.Serialize(writer, obj);
 		return xmlDocument;
 	}
 
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static XmlElement? WriteToXmlElement(
+	public static XmlDocument SerializeToXmlDocument(
 		object obj,
 		XmlAttributeOverrides? overrides = null,
 		Type[]? extraTypes = null,
 		XmlRootAttribute? root = null,
 		string? defaultNamespace = null,
 		string? location = null)
-	{
-		return WriteToXmlDocument(obj, overrides, extraTypes, root, defaultNamespace, location).DocumentElement;
-	}
+		=> SerializeToXmlDocument(
+			obj,
+			obj?.GetType()!,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
 
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static byte[] WriteToByteArray(
+	public static XmlDocument SerializeToXmlDocument<T>(
 		object obj,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlDocument(
+			obj,
+			typeof(T),
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
+
+	public static XmlElement? SerializeToXmlElement(
+		object obj,
+		Type type,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlDocument(obj, type, overrides, extraTypes, root, defaultNamespace, location).DocumentElement;
+
+	public static XmlElement? SerializeToXmlElement(
+		object obj,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlDocument(obj, obj?.GetType()!, overrides, extraTypes, root, defaultNamespace, location).DocumentElement;
+
+	public static XmlElement? SerializeToXmlElement<T>(
+		object obj,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToXmlDocument(obj, typeof(T), overrides, extraTypes, root, defaultNamespace, location).DocumentElement;
+
+	public static MemoryStream SerializeToStream(
+		object obj,
+		Type type,
 		Encoding? encoding = null,
 		bool zipXml = false,
 		XmlAttributeOverrides? overrides = null,
@@ -390,30 +519,12 @@ public static class XmlSerializerHelper
 		if (obj == null)
 			throw new ArgumentNullException(nameof(obj));
 
-		using MemoryStream memoryStream = WriteToStream(obj, encoding, zipXml, overrides, extraTypes, root, defaultNamespace, location);
-		return memoryStream.ToArray();
-	}
+		if (type == null)
+			throw new ArgumentNullException(nameof(type));
 
-	/// <summary>
-	/// Can not serialize circular references.
-	/// </summary>
-	public static MemoryStream WriteToStream(
-		object obj,
-		Encoding? encoding = null,
-		bool zipXml = false,
-		XmlAttributeOverrides? overrides = null,
-		Type[]? extraTypes = null,
-		XmlRootAttribute? root = null,
-		string? defaultNamespace = null,
-		string? location = null)
-	{
-		if (obj == null)
-			throw new ArgumentNullException(nameof(obj));
+		encoding ??= Encoding.UTF8;
 
-		if (encoding == null)
-			encoding = Encoding.UTF8;
-
-		var serializer = GetXmlSerializer(obj.GetType(), overrides, extraTypes, root, defaultNamespace, location);
+		var serializer = GetXmlSerializer(type, overrides, extraTypes, root, defaultNamespace, location);
 
 		var memoryStream = new MemoryStream();
 		var memoryStreamWriter = new StreamWriter(memoryStream, encoding);
@@ -432,7 +543,102 @@ public static class XmlSerializerHelper
 		}
 
 		memoryStream.Seek(0, SeekOrigin.Begin);
-		//memoryStream.Seek(0, SeekOrigin.Begin);
+
 		return memoryStream;
+	}
+
+	public static MemoryStream SerializeToStream(
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToStream(
+			obj,
+			obj?.GetType()!,
+			encoding,
+			zipXml,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
+
+	public static MemoryStream SerializeToStream<T>(
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+		=> SerializeToStream(
+			obj,
+			typeof(T),
+			encoding,
+			zipXml,
+			overrides,
+			extraTypes,
+			root,
+			defaultNamespace,
+			location);
+
+	public static byte[] SerializeToByteArray(
+		object obj,
+		Type type,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+	{
+		if (obj == null)
+			throw new ArgumentNullException(nameof(obj));
+
+		if (type == null)
+			throw new ArgumentNullException(nameof(type));
+
+		using MemoryStream memoryStream = SerializeToStream(obj, type, encoding, zipXml, overrides, extraTypes, root, defaultNamespace, location);
+		return memoryStream.ToArray();
+	}
+
+	public static byte[] SerializeToByteArray(
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+	{
+		if (obj == null)
+			throw new ArgumentNullException(nameof(obj));
+
+		using MemoryStream memoryStream = SerializeToStream(obj, obj?.GetType()!, encoding, zipXml, overrides, extraTypes, root, defaultNamespace, location);
+		return memoryStream.ToArray();
+	}
+
+	public static byte[] SerializeToByteArray<T>(
+		object obj,
+		Encoding? encoding = null,
+		bool zipXml = false,
+		XmlAttributeOverrides? overrides = null,
+		Type[]? extraTypes = null,
+		XmlRootAttribute? root = null,
+		string? defaultNamespace = null,
+		string? location = null)
+	{
+		if (obj == null)
+			throw new ArgumentNullException(nameof(obj));
+
+		using MemoryStream memoryStream = SerializeToStream(obj, typeof(T), encoding, zipXml, overrides, extraTypes, root, defaultNamespace, location);
+		return memoryStream.ToArray();
 	}
 }

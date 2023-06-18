@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using Envelope.Exceptions;
+using Envelope.Queries.Sorting;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -195,5 +197,15 @@ public static class IQueryableExtensions
 			Expression.Lambda<Func<TEntity, bool>>(orExpressions, new ParameterExpression[] { parameter }));
 
 		return queryable.Provider.CreateQuery<TEntity>(whereCallExpression);
+	}
+
+	public static IQueryable<T> Sort<T>(this IQueryable<T> source, Action<SortDescriptorBuilder<T>> sortBuilder)
+	{
+		Throw.ArgumentNull(source);
+		Throw.ArgumentNull(sortBuilder);
+
+		var builder = new SortDescriptorBuilder<T>();
+		sortBuilder.Invoke(builder);
+		return builder.Apply(source);
 	}
 }
