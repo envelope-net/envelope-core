@@ -32,23 +32,28 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNull<T>(
 		T? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} == null{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
 
 	public ValidationRuleBuilder Validate(
 		IValidable? validable,
+		bool allowNullValue = false,
 		Dictionary<string, object>? customValidationContext = null,
 		[CallerArgumentExpression("validable")] string? validableParameterName = null,
 		string? detailMessage = null)
 	{
 		if (validable is null)
 		{
-			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableParameterName)} == null{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+			if (!allowNullValue)
+				ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableParameterName)} == null{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
 		}
 		else
 		{
@@ -60,17 +65,21 @@ public class ValidationRuleBuilder
 
 	public ValidationRuleBuilder Validate(
 		IEnumerable<IValidable>? validableCollection,
+		bool allowNullCollection = false,
+		bool allowEmptyCollection = false,
 		Dictionary<string, object>? customValidationContext = null,
 		[CallerArgumentExpression("validableCollection")] string? validableCollectionParameterName = null,
 		string? detailMessage = null)
 	{
 		if (validableCollection is null)
 		{
-			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableCollectionParameterName)} == null{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+			if (!allowNullCollection)
+				ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableCollectionParameterName)} == null{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
 		}
 		else if (!validableCollection.Any())
 		{
-			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableCollectionParameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+			if (!allowEmptyCollection)
+				ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", validableCollectionParameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
 		}
 		else
 		{
@@ -129,7 +138,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrEmpty(
 		string? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 		{
@@ -139,6 +149,8 @@ public class ValidationRuleBuilder
 
 		if (string.IsNullOrEmpty(parameter))
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -146,7 +158,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrWhiteSpace(
 		string? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 		{
@@ -156,6 +169,8 @@ public class ValidationRuleBuilder
 
 		if (string.IsNullOrWhiteSpace(parameter))
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_WHITE_SPACE}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -163,7 +178,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrEmpty(
 		ICollection? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 		{
@@ -173,6 +189,8 @@ public class ValidationRuleBuilder
 
 		if (parameter.Count == 0)
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -180,7 +198,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrEmpty(
 		Array? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 		{
@@ -190,6 +209,8 @@ public class ValidationRuleBuilder
 
 		if (parameter.Length == 0)
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -197,7 +218,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrEmpty(
 		IEnumerable? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (parameter is null)
 		{
@@ -207,6 +229,8 @@ public class ValidationRuleBuilder
 
 		if (!parameter.Cast<object>().Any())
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_EMPTY}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -214,11 +238,14 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfDefault<T>(
 		T parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 		where T : struct, IComparable<T>, IComparable
 	{
 		if (ValidationHelper.IsDefault(parameter))
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_DEFAULT}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -226,11 +253,14 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullableDefault<T>(
 		T? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 		where T : struct, IComparable<T>, IComparable
 	{
 		if (ValidationHelper.IsDefault(parameter))
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_DEFAULT}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
@@ -238,7 +268,8 @@ public class ValidationRuleBuilder
 	public ValidationRuleBuilder IfNullOrDefault<T>(
 		T? parameter,
 		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 		where T : struct, IComparable<T>, IComparable
 	{
 		if (parameter is null)
@@ -249,34 +280,38 @@ public class ValidationRuleBuilder
 		{
 			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {IS_DEFAULT}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
 		}
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
 
-	public ValidationRuleBuilder If<T>(
+	public ValidationRuleBuilder If(
 		bool value,
-		T? parameter,
 		[CallerArgumentExpression("value")] string? message = null,
-		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		if (value)
-			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {message}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{(string.IsNullOrWhiteSpace(Prefix) ? string.Empty : $"{Prefix} > ")} {message}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
 
-	public ValidationRuleBuilder If<T>(
+	public ValidationRuleBuilder If(
 		Func<bool> value,
-		T? parameter,
 		string message,
-		[CallerArgumentExpression("parameter")] string? parameterName = null,
-		string? detailMessage = null)
+		string? detailMessage = null,
+		Action<ValidationRuleBuilder>? onSuccess = null)
 	{
 		Throw.ArgumentNull(value);
 
 		if (value())
-			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{StringHelper.ConcatIfNotNullOrEmpty(Prefix, ".", parameterName)} {message}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+			ValidationBuilder._messages.Add(ValidationMessageFactory.Error($"{(string.IsNullOrWhiteSpace(Prefix) ? string.Empty : $"{Prefix} > ")} {message}{(string.IsNullOrWhiteSpace(detailMessage) ? string.Empty : $" | {detailMessage}")}"));
+		else
+			onSuccess?.Invoke(this);
 
 		return this;
 	}
