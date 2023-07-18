@@ -1,4 +1,6 @@
 ﻿using Envelope.Exceptions;
+using Envelope.Queries;
+using Envelope.Queries.Paging;
 using Envelope.Queries.Sorting;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -199,13 +201,53 @@ public static class IQueryableExtensions
 		return queryable.Provider.CreateQuery<TEntity>(whereCallExpression);
 	}
 
-	public static IQueryable<T> Sort<T>(this IQueryable<T> source, Action<SortDescriptorBuilder<T>> sortBuilder)
+	public static IQueryable<T> Sort<T>(this IQueryable<T> source, Action<SortDescriptorBuilder<T>>? sorting)
 	{
 		Throw.ArgumentNull(source);
-		Throw.ArgumentNull(sortBuilder);
+
+		if (sorting == null)
+			return source;
 
 		var builder = new SortDescriptorBuilder<T>();
-		sortBuilder.Invoke(builder);
-		return builder.Apply(source);
+		sorting.Invoke(builder);
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IQueryable<T> GetPage<T>(this IQueryable<T> source, Action<PagingDescriptorBuilder<T>>? paging)
+	{
+		Throw.ArgumentNull(source);
+
+		if (paging == null)
+			return source;
+
+		var builder = new PagingDescriptorBuilder<T>();
+		paging.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IQueryable<T> Apply<T>(this IQueryable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
+		where T: class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		var builder = new QueryableBuilder<T>();
+		queryableBuilder.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IQueryable<T> Apply<T>(this IQueryable<T> source, IQueryableBuilder<T>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		return queryableBuilder.Apply(source);
 	}
 }

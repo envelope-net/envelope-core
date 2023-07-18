@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Envelope.Text;
@@ -1009,5 +1010,44 @@ public static class StringHelper
 			return text;
 
 		return new System.Xml.Linq.XElement("t", text).LastNode!.ToString();
+	}
+
+	public static string ConvertToString(object? value, CultureInfo cultureInfo)
+	{
+		if (value == null)
+			return string.Empty;
+
+		if (value is Enum)
+		{
+			var name = Enum.GetName(value.GetType(), value);
+			if (name != null)
+			{
+				var field = IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
+				if (field != null)
+				{
+					if (CustomAttributeExtensions.GetCustomAttribute(field, typeof(EnumMemberAttribute)) is EnumMemberAttribute attribute)
+						return attribute.Value ?? name;
+				}
+
+				var converted = Convert.ToString(Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType()), cultureInfo));
+				return converted ?? string.Empty;
+			}
+		}
+		else if (value is bool boolean)
+		{
+			return Convert.ToString(boolean, cultureInfo).ToLowerInvariant();
+		}
+		else if (value is byte[] bytes)
+		{
+			return Convert.ToBase64String(bytes);
+		}
+		else if (value.GetType().IsArray)
+		{
+			var array = Enumerable.OfType<object>((Array)value);
+			return string.Join(",", Enumerable.Select(array, o => ConvertToString(o, cultureInfo)));
+		}
+
+		var result = Convert.ToString(value, cultureInfo);
+		return result ?? string.Empty;
 	}
 }

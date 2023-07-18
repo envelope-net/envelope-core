@@ -6,10 +6,10 @@ namespace Envelope.Queries.Sorting;
 
 public class SortDescriptor<T>
 {
-	private Expression<Func<T, object>> _memberSelector;
+	private Expression<Func<T, object>>? _memberSelector;
 	public Expression<Func<T, object>> MemberSelector
 	{
-		get => _memberSelector;
+		get => _memberSelector!;
 		set
 		{
 			_memberSelector = value;

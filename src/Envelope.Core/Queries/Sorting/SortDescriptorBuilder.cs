@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace Envelope.Queries.Sorting;
 
-public class SortDescriptorBuilder<T>
+public class SortDescriptorBuilder<T> : ISortDescriptorBuilder<T>, IQueryModifier<T>
 {
 	private readonly List<SortDescriptor<T>> _sortStack;
 
@@ -14,7 +14,7 @@ public class SortDescriptorBuilder<T>
 		_sortStack = new();
 	}
 
-	public SortDescriptorBuilder<T> SortBy(Expression<Func<T, object>>? memberSelector, ListSortDirection sortDirection = ListSortDirection.Ascending)
+	public SortDescriptorBuilder<T> SortBy(Expression<Func<T, object>> memberSelector, ListSortDirection sortDirection = ListSortDirection.Ascending)
 	{
 		Throw.ArgumentNull(memberSelector);
 
@@ -27,7 +27,10 @@ public class SortDescriptorBuilder<T>
 		return this;
 	}
 
-	internal IEnumerable<T> Apply(IEnumerable<T> enumerable)
+	ISortDescriptorBuilder<T> ISortDescriptorBuilder<T>.SortBy(Expression<Func<T, object>> memberSelector, ListSortDirection sortDirection)
+		=> SortBy(memberSelector, sortDirection);
+
+	IEnumerable<T> IQueryModifier<T>.Apply(IEnumerable<T> enumerable)
 	{
 		Throw.ArgumentNull(enumerable);
 
@@ -51,11 +54,11 @@ public class SortDescriptorBuilder<T>
 			{
 				if (sort.SortDirection == ListSortDirection.Ascending)
 				{
-					orderedQueryable = orderedQueryable.ThenBy(sort.MemberDelegate);
+					orderedQueryable = orderedQueryable!.ThenBy(sort.MemberDelegate);
 				}
 				else
 				{
-					orderedQueryable = orderedQueryable.ThenByDescending(sort.MemberDelegate);
+					orderedQueryable = orderedQueryable!.ThenByDescending(sort.MemberDelegate);
 				}
 			}
 		}
@@ -63,7 +66,7 @@ public class SortDescriptorBuilder<T>
 		return orderedQueryable ?? enumerable;
 	}
 
-	internal IQueryable<T> Apply(IQueryable<T> queryable)
+	IQueryable<T> IQueryModifier<T>.Apply(IQueryable<T> queryable)
 	{
 		Throw.ArgumentNull(queryable);
 
@@ -87,11 +90,11 @@ public class SortDescriptorBuilder<T>
 			{
 				if (sort.SortDirection == ListSortDirection.Ascending)
 				{
-					orderedQueryable = orderedQueryable.ThenBy(sort.MemberSelector);
+					orderedQueryable = orderedQueryable!.ThenBy(sort.MemberSelector);
 				}
 				else
 				{
-					orderedQueryable = orderedQueryable.ThenByDescending(sort.MemberSelector);
+					orderedQueryable = orderedQueryable!.ThenByDescending(sort.MemberSelector);
 				}
 			}
 		}

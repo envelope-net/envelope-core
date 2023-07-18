@@ -1,5 +1,7 @@
 ﻿using Envelope.Collections;
 using Envelope.Exceptions;
+using Envelope.Queries;
+using Envelope.Queries.Paging;
 using Envelope.Queries.Sorting;
 using System.Collections;
 using System.Collections.ObjectModel;
@@ -342,14 +344,54 @@ public static class IEnumerableExtensions
 	public static IEnumerable<T[]> Permutations<T>(this IEnumerable<T> values)
 		=> ArrayHelper.Permutations(values.ToArray());
 
-	public static IEnumerable<T> Sort<T>(this IEnumerable<T> source, Action<SortDescriptorBuilder<T>> sortBuilder)
+	public static IEnumerable<T> Sort<T>(this IEnumerable<T> source, Action<SortDescriptorBuilder<T>>? sorting)
 	{
 		Throw.ArgumentNull(source);
-		Throw.ArgumentNull(sortBuilder);
+
+		if (sorting == null)
+			return source;
 
 		var builder = new SortDescriptorBuilder<T>();
-		sortBuilder.Invoke(builder);
-		return builder.Apply(source);
+		sorting.Invoke(builder);
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IEnumerable<T> GetPage<T>(this IEnumerable<T> source, Action<PagingDescriptorBuilder<T>>? paging)
+	{
+		Throw.ArgumentNull(source);
+
+		if (paging == null)
+			return source;
+
+		var builder = new PagingDescriptorBuilder<T>();
+		paging.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IEnumerable<T> Apply<T>(this IEnumerable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		var builder = new QueryableBuilder<T>();
+		queryableBuilder.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).Apply(source);
+	}
+
+	public static IEnumerable<T> Apply<T>(this IEnumerable<T> source, IQueryableBuilder<T>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		return queryableBuilder.Apply(source);
 	}
 }
 
