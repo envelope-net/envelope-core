@@ -2,12 +2,17 @@
 
 namespace Envelope.Queries.Includes;
 
-public interface IThenIncludeDescriptorBuilder<TEntity, out TProperty> : IQueryModifier<TEntity>
+public interface IThenIncludeDescriptorBuilder<TEntity> : IQueryModifier<TEntity>
 	where TEntity : class
 {
 }
 
-public interface IThenIncludeDescriptorBuilder<TEntity, TProperty, TNextProperty> : IThenIncludeDescriptorBuilder<TEntity, TProperty>, IQueryModifier<TEntity>
+public interface IThenIncludeDescriptorBuilder<TEntity, out TProperty> : IThenIncludeDescriptorBuilder<TEntity>, IQueryModifier<TEntity>
+	where TEntity : class
+{
+}
+
+public interface IThenIncludeDescriptorBuilder<TEntity, TProperty, TNextProperty> : IThenIncludeDescriptorBuilder<TEntity, TProperty>, IThenIncludeDescriptorBuilder<TEntity>, IQueryModifier<TEntity>
 	where TEntity : class
 {
 	IIncludeDescriptorBuilder<TEntity, T> IncludeEnumerable<T>(Expression<Func<TEntity, IEnumerable<T>>> memberSelector);

@@ -56,6 +56,84 @@ public class QueryableBuilder<T> : IQueryableBuilder<T>, IQueryModifier<T>
 	//	return this;
 	//}
 
+	IEnumerable<T> IQueryModifier<T>.ApplySort(IEnumerable<T> enumerable)
+	{
+		Throw.ArgumentNull(enumerable);
+
+		foreach (var modifier in _modifiersStack)
+			if (modifier is ISortDescriptorBuilder<T> descriptor)
+				enumerable = descriptor.ApplySort(enumerable);
+
+		return enumerable;
+	}
+
+	IQueryable<T> IQueryModifier<T>.ApplySort(IQueryable<T> queryable)
+	{
+		Throw.ArgumentNull(queryable);
+
+		foreach (var modifier in _modifiersStack)
+			if (modifier is ISortDescriptorBuilder<T> descriptor)
+				queryable = descriptor.ApplySort(queryable);
+
+		return queryable;
+	}
+
+	IEnumerable<T> IQueryModifier<T>.ApplyPaging(IEnumerable<T> enumerable)
+	{
+		Throw.ArgumentNull(enumerable);
+
+		foreach (var modifier in _modifiersStack)
+			if (modifier is IPagingDescriptorBuilder<T> descriptor)
+				enumerable = descriptor.ApplyPaging(enumerable);
+
+		return enumerable;
+	}
+
+	IQueryable<T> IQueryModifier<T>.ApplyPaging(IQueryable<T> queryable)
+	{
+		Throw.ArgumentNull(queryable);
+
+		foreach (var modifier in _modifiersStack)
+			if (modifier is IPagingDescriptorBuilder<T> descriptor)
+				queryable = descriptor.ApplyPaging(queryable);
+
+		return queryable;
+	}
+
+	IEnumerable<T> IQueryModifier<T>.ApplyIncludes(IEnumerable<T> enumerable)
+	{
+		Throw.ArgumentNull(enumerable);
+
+		foreach (var modifier in _modifiersStack)
+		{
+			if (modifier is IIncludeBaseDescriptorBuilder<T> baseDescriptor)
+				enumerable = baseDescriptor.ApplyIncludes(enumerable);
+			else if (modifier is IIncludeDescriptorBuilder<T> descriptor)
+				enumerable = descriptor.ApplyIncludes(enumerable);
+			else if (modifier is IThenIncludeDescriptorBuilder<T> thenDescriptor)
+				enumerable = thenDescriptor.ApplyIncludes(enumerable);
+		}
+
+		return enumerable;
+	}
+
+	IQueryable<T> IQueryModifier<T>.ApplyIncludes(IQueryable<T> queryable)
+	{
+		Throw.ArgumentNull(queryable);
+
+		foreach (var modifier in _modifiersStack)
+		{
+			if (modifier is IIncludeBaseDescriptorBuilder<T> baseDescriptor)
+				queryable = baseDescriptor.ApplyIncludes(queryable);
+			else if (modifier is IIncludeDescriptorBuilder<T> descriptor)
+				queryable = descriptor.ApplyIncludes(queryable);
+			else if (modifier is IThenIncludeDescriptorBuilder<T> thenDescriptor)
+				queryable = thenDescriptor.ApplyIncludes(queryable);
+		}
+
+		return queryable;
+	}
+
 	IEnumerable<T> IQueryModifier<T>.Apply(IEnumerable<T> enumerable)
 	{
 		Throw.ArgumentNull(enumerable);

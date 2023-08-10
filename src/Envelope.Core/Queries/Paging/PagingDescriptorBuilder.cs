@@ -15,6 +15,42 @@ public class PagingDescriptorBuilder<T> : IPagingDescriptorBuilder<T>, IQueryMod
 		return this;
 	}
 
+	IEnumerable<T> IQueryModifier<T>.ApplySort(IEnumerable<T> enumerable)
+		=> enumerable;
+
+	IQueryable<T> IQueryModifier<T>.ApplySort(IQueryable<T> queryable)
+		=> queryable;
+
+	IEnumerable<T> IQueryModifier<T>.ApplyPaging(IEnumerable<T> enumerable)
+	{
+		Throw.ArgumentNull(enumerable);
+
+		if (0 < _pageIndex && 0 < _pageSize)
+			enumerable = enumerable
+				.Skip((_pageIndex - 1) * _pageSize)
+				.Take(_pageSize);
+
+		return enumerable;
+	}
+
+	IQueryable<T> IQueryModifier<T>.ApplyPaging(IQueryable<T> queryable)
+	{
+		Throw.ArgumentNull(queryable);
+
+		if (0 < _pageIndex && 0 < _pageSize)
+			queryable = queryable
+				.Skip((_pageIndex - 1) * _pageSize)
+				.Take(_pageSize);
+
+		return queryable;
+	}
+
+	IEnumerable<T> IQueryModifier<T>.ApplyIncludes(IEnumerable<T> enumerable)
+		=> enumerable;
+
+	IQueryable<T> IQueryModifier<T>.ApplyIncludes(IQueryable<T> queryable)
+		=> queryable;
+
 	IEnumerable<T> IQueryModifier<T>.Apply(IEnumerable<T> enumerable)
 	{
 		Throw.ArgumentNull(enumerable);

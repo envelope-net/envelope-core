@@ -353,7 +353,7 @@ public static class IEnumerableExtensions
 
 		var builder = new SortDescriptorBuilder<T>();
 		sorting.Invoke(builder);
-		return ((IQueryModifier<T>)builder).Apply(source);
+		return ((IQueryModifier<T>)builder).ApplySort(source);
 	}
 
 	public static IEnumerable<T> GetPage<T>(this IEnumerable<T> source, Action<PagingDescriptorBuilder<T>>? paging)
@@ -366,7 +366,7 @@ public static class IEnumerableExtensions
 		var builder = new PagingDescriptorBuilder<T>();
 		paging.Invoke(builder);
 
-		return ((IQueryModifier<T>)builder).Apply(source);
+		return ((IQueryModifier<T>)builder).ApplyPaging(source);
 	}
 
 	public static IEnumerable<T> Apply<T>(this IEnumerable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
@@ -392,6 +392,81 @@ public static class IEnumerableExtensions
 			return source;
 
 		return queryableBuilder.Apply(source);
+	}
+
+	public static IEnumerable<T> ApplyIncludes<T>(this IEnumerable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		var builder = new QueryableBuilder<T>();
+		queryableBuilder.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).ApplyIncludes(source);
+	}
+
+	public static IEnumerable<T> ApplyIncludes<T>(this IEnumerable<T> source, IQueryableBuilder<T>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		return queryableBuilder.ApplyIncludes(source);
+	}
+
+	public static IEnumerable<T> ApplyPaging<T>(this IEnumerable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		var builder = new QueryableBuilder<T>();
+		queryableBuilder.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).ApplyPaging(source);
+	}
+
+	public static IEnumerable<T> ApplyPaging<T>(this IEnumerable<T> source, IQueryableBuilder<T>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		return queryableBuilder.ApplyPaging(source);
+	}
+
+	public static IEnumerable<T> ApplySort<T>(this IEnumerable<T> source, Action<QueryableBuilder<T>>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		var builder = new QueryableBuilder<T>();
+		queryableBuilder.Invoke(builder);
+
+		return ((IQueryModifier<T>)builder).ApplySort(source);
+	}
+
+	public static IEnumerable<T> ApplySort<T>(this IEnumerable<T> source, IQueryableBuilder<T>? queryableBuilder)
+		where T : class
+	{
+		Throw.ArgumentNull(source);
+
+		if (queryableBuilder == null)
+			return source;
+
+		return queryableBuilder.ApplySort(source);
 	}
 }
 
