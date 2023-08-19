@@ -15,9 +15,9 @@ public interface IDbTransactionFactory : ITransactionCache, IDisposable
 
 	DbTransaction? CurrentDbTransaction { get; }
 
-	void Initialize();
+	void Initialize(string connectionId);
 
-	Task InitializeAsync();
+	Task InitializeAsync(string connectionId);
 
 	DbTransaction BeginTransaction();
 

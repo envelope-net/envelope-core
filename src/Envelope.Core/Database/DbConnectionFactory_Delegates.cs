@@ -2,6 +2,8 @@
 
 namespace Envelope.Database;
 
-public delegate DbConnection DbConnectionFactory();
+public delegate DbConnection DbConnectionFactory(string connectionId);
 
-public delegate Task<DbConnection> DbConnectionFactoryAsync(CancellationToken cancellationToken = default);
+public delegate Task<DbConnection> DbConnectionFactoryAsync(
+		string connectionId,
+		CancellationToken cancellationToken = default);

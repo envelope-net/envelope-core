@@ -59,7 +59,7 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 		if (dbConnection == null)
 			throw new ArgumentNullException(nameof(dbConnection));
 
-		_dbConnectionFactory = new(() => dbConnection);
+		_dbConnectionFactory = new(connectionId => dbConnection);
 		CurrentDbTransaction = currentDbTransaction;
 		IsInTransaction = CurrentDbTransaction != null;
 	}
@@ -71,14 +71,14 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 		if (CurrentDbTransaction.Connection == null)
 			throw new InvalidOperationException($"{nameof(CurrentDbTransaction.Connection)} == null");
 
-		_dbConnectionFactory = new(() => CurrentDbTransaction.Connection);
+		_dbConnectionFactory = new(connectionId => CurrentDbTransaction.Connection);
 		IsInTransaction = CurrentDbTransaction != null;
 	}
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 	private readonly object _initLock = new();
-	public void Initialize()
+	public void Initialize(string connectionId)
 	{
 		if (_initialized)
 			return;
@@ -91,7 +91,7 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 			if (_dbConnectionFactory == null)
 				throw new InvalidOperationException($"{nameof(_dbConnectionFactory)} == null");
 
-			_dbConnection = _dbConnectionFactory();
+			_dbConnection = _dbConnectionFactory(connectionId);
 			if (_dbConnection == null)
 				throw new InvalidOperationException($"{nameof(_dbConnectionFactory)} returns null");
 
@@ -100,7 +100,7 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 	}
 
 	private readonly AsyncLock _initAsyncLock = new();
-	public async Task InitializeAsync()
+	public async Task InitializeAsync(string connectionId)
 	{
 		if (_initialized)
 			return;
@@ -115,13 +115,13 @@ public class DbTransactionFactory : IDbTransactionFactory, ITransactionCache, ID
 				if (_dbConnectionFactory == null)
 					throw new InvalidOperationException($"{nameof(_dbConnectionFactoryAsync)} == null AND {nameof(_dbConnectionFactory)} == null");
 
-				_dbConnection = _dbConnectionFactory();
+				_dbConnection = _dbConnectionFactory(connectionId);
 				if (_dbConnection == null)
 					throw new InvalidOperationException($"{nameof(_dbConnectionFactory)} returns null");
 			}
 			else
 			{
-				_dbConnection = await _dbConnectionFactoryAsync();
+				_dbConnection = await _dbConnectionFactoryAsync(connectionId);
 				if (_dbConnection == null)
 					throw new InvalidOperationException($"{nameof(_dbConnectionFactoryAsync)} returns null");
 			}
