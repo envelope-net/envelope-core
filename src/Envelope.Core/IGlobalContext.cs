@@ -18,6 +18,16 @@ public interface IGlobalContext
 	DateTime UtcNow { get; }
 
 	/// <summary>
+	/// Gets a System.DateTimeOffset object that is set to the current date and time on this computer, expressed as the local time.
+	/// </summary>
+	DateTimeOffset DateTimeOffsetNow { get; }
+
+	/// <summary>
+	/// Gets a System.DateTimeOffset object that is set to the current date and time on this computer, expressed as the Coordinated Universal Time (UTC)
+	/// </summary>
+	DateTimeOffset DateTimeOffsetUtcNow { get; }
+
+	/// <summary>
 	/// Initializes a new instance of the System.Guid structure.
 	/// </summary>
 	/// <returns>A new GUID object.</returns>

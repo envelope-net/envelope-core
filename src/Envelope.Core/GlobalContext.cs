@@ -4,7 +4,7 @@ public class GlobalContext : IGlobalContext
 {
 	private static readonly Lazy<IGlobalContext> _instanceFactory = new(() => new GlobalContext());
 
-	private static IGlobalContext _instance;
+	private static IGlobalContext? _instance;
 	public static IGlobalContext Instance
 	{
 		get => _instance ??= _instanceFactory.Value;
@@ -25,6 +25,16 @@ public class GlobalContext : IGlobalContext
 	/// Gets a System.DateTime object that is set to the current date and time on this computer, expressed as the Coordinated Universal Time (UTC)
 	/// </summary>
 	public DateTime UtcNow => DateTime.UtcNow;
+
+	/// <summary>
+	/// Gets a System.DateTimeOffset object that is set to the current date and time on this computer, expressed as the local time.
+	/// </summary>
+	public DateTimeOffset DateTimeOffsetNow => DateTimeOffset.Now;
+
+	/// <summary>
+	/// Gets a System.DateTimeOffset object that is set to the current date and time on this computer, expressed as the Coordinated Universal Time (UTC)
+	/// </summary>
+	public DateTimeOffset DateTimeOffsetUtcNow => DateTimeOffset.UtcNow;
 
 	/// <summary>
 	/// Initializes a new instance of the System.Guid structure.

@@ -142,7 +142,7 @@ public static class XmlSerializerHelper
 		return objectFromXml;
 	}
 
-	public static T? ReadFromString<T>(
+	public static T? DeserializeFromString<T>(
 		string xmlObject,
 		Encoding? encoding = null,
 		XmlAttributeOverrides? overrides = null,
